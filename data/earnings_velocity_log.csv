@@ -1,0 +1,5 @@
+log_id,driver_id,trip_id,timestamp,cumulative_earnings,elapsed_hours,trips_completed,current_velocity,required_velocity,velocity_delta,avg_earning_per_trip,est_trips_remaining,forecast_status
+VEL_1772739384308,DRV_ALEX,TRIP_001,2024-10-25 08:30:00,120.0,0.5,1,240.0,184.0,56.0,120.0,12,ahead
+VEL_1772739391389,DRV_ALEX,TRIP_002,2024-10-25 09:02:00,330.0,1.03,2,319.35,167.94,151.41,165.0,8,ahead
+VEL_1772739397031,DRV_ALEX,TRIP_003,2024-10-25 09:30:00,490.0,1.5,3,326.67,155.38,171.28,163.33,7,ahead
+VEL_1772739405025,DRV_ALEX,TRIP_004,2024-10-25 10:05:00,740.0,2.08,4,355.2,128.45,226.75,185.0,5,ahead

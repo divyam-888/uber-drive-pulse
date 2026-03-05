@@ -1,0 +1,68 @@
+import pandas as pd
+import time
+from datetime import datetime
+
+# In a real app, these would be imported from Person 1 and Person 2's files
+from financial_engine import FinancialEngine
+from safety_engine import SafetyEngine
+# e.g., from financial_engine import process_completed_trip
+
+def run_simulator():
+    print("🚦 Initializing Uber Drive Pulse Simulator...")
+    safety_engine = SafetyEngine()
+    financial_engine = FinancialEngine()
+    
+    # 1. Load the synthetic data
+    accel_df = pd.read_csv("data/accelerometer_data.csv")
+    audio_df = pd.read_csv("data/audio_intensity_data.csv")
+    trips_df = pd.read_csv("data/trips.csv")
+    
+    # 2. Tag the data so the simulator knows what it is looking at
+    accel_df['event_type'] = 'motion'
+    audio_df['event_type'] = 'audio'
+    
+    # 3. Combine and sort strictly by exact timestamp
+    print("🔄 Merging sensor streams chronologically...")
+    stream_df = pd.concat([accel_df, audio_df]).sort_values(by='timestamp')
+    
+    # Convert trip end times to easily check when a trip finishes
+    trips_df['end_time_dt'] = pd.to_datetime(trips_df['date'] + ' ' + trips_df['end_time'])
+    print("🔗 Building Trip-to-Driver relational map...")
+    trip_to_driver = dict(zip(trips_df['trip_id'], trips_df['driver_id']))
+
+    completed_trips_tracked = set()
+
+    print("🚀 Starting Live Stream Simulation...\n")
+    print("-" * 50)
+    
+    # 4. The Event Loop (Simulating the passage of time)
+    for index, row in stream_df.iterrows():
+        current_time_str = row['timestamp']
+        current_time_dt = pd.to_datetime(current_time_str)
+        event_type = row['event_type']
+        trip_id = row['trip_id']
+        driver_id = trip_to_driver.get(trip_id, 'UNKNOWN')
+        
+        # --- DISPATCH TO PERSON 1 (Safety Engine) ---
+        if event_type == 'motion':
+            safety_engine.process_motion(row, driver_id)  # <-- Replaced the print statement
+            
+        elif event_type == 'audio':
+            safety_engine.process_audio(row, driver_id)
+            
+        # --- DISPATCH TO PERSON 2 (Financial Engine) ---
+        # Check if the current timestamp means a trip just ended
+        trip_info = trips_df[trips_df['trip_id'] == trip_id].iloc[0]
+        if current_time_dt >= trip_info['end_time_dt'] and trip_id not in completed_trips_tracked:
+            print(f"\n💰 [EVENT] {trip_id} Completed at {current_time_str}!")
+            print(f"💰 Dispatching Fare: ${trip_info['fare']} to Financial Engine...\n")
+            
+            financial_engine.process_completed_trip(trip_info, current_time_dt)
+            
+            completed_trips_tracked.add(trip_id)
+
+        # Pause to simulate real-time (set to 0.01 for fast testing, 1.0 for real-time demo)
+        time.sleep(0.001)
+
+if __name__ == "__main__":
+    run_simulator()
