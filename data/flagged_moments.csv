@@ -1,0 +1,9 @@
+flag_id,trip_id,driver_id,timestamp,elapsed_seconds,flag_type,severity,explanation,context
+FLAG_9C44B0C8,TRIP_002,DRV_ALEX,2024-10-25 09:02:31,1351,harsh_braking,medium,Harsh brake (4.6 m/s²) at 75 km/h.,Motion: harsh_brake
+FLAG_D8F1D15C,TRIP_003,DRV_ALEX,2024-10-25 10:00:05,1505,high_audio,low,Sustained elevated cabin noise (82.0 dB avg).,Audio: elevated
+FLAG_62F9FCFE,TRIP_004,DRV_ALEX,2024-10-25 10:47:32,752,harsh_braking,medium,Harsh brake (5.3 m/s²) at 50 km/h.,Motion: harsh_brake
+FLAG_AAB362D4,TRIP_005,DRV_ALEX,2024-10-25 11:25:01,901,high_audio,low,Sustained elevated cabin noise (80.5 dB avg).,Audio: elevated
+FLAG_58651E0A,TRIP_005,DRV_ALEX,2024-10-25 11:25:01,901,harsh_braking,medium,Harsh brake (5.7 m/s²) at 37 km/h.,Motion: harsh_brake
+FLAG_D5E19680,TRIP_005,DRV_ALEX,2024-10-25 11:25:01,901,conflict_moment,high,Combined signal: Harsh braking + sustained high audio within 60s.,Motion: harsh_brake | Audio: argument
+FLAG_06AA496B,TRIP_005,DRV_ALEX,2024-10-25 11:25:11,911,high_audio,high,Sustained elevated cabin noise (93.0 dB avg).,Audio: elevated
+FLAG_9336B4F7,TRIP_006,DRV_ALEX,2024-10-25 12:00:01,601,harsh_braking,medium,Harsh brake (4.8 m/s²) at 38 km/h.,Motion: harsh_brake
