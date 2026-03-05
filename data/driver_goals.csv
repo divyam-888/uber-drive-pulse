@@ -1,0 +1,2 @@
+goal_id,driver_id,date,shift_start_time,shift_end_time,target_earnings,target_hours,current_earnings,current_hours,status,earnings_velocity,goal_completion_forecast
+GOAL001,DRV_ALEX,2024-10-25,08:00:00,16:00:00,1500,8,0,0,in_progress,0,pending
