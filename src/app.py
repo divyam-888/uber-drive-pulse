@@ -61,7 +61,7 @@ def render_live_shift(fin_df, goal):
     st.divider()
     
     if fin_df.empty or goal is None:
-        st.info("📡 Waiting for connection to driver's vehicle... Click 'Start Simulation' in the sidebar.")
+        st.info("📡 Waiting for connection to driver's vehicle... Click 'Start Fresh Simulation' in the sidebar.")
         return
 
     latest = fin_df.iloc[-1]
@@ -84,8 +84,12 @@ def render_live_shift(fin_df, goal):
     st.caption(f"Estimated {latest['est_trips_remaining']} trips remaining to hit target.")
     st.markdown("<div class='uber-footer'><b>Uber</b> Engineering Hackathon 2026</div>", unsafe_allow_html=True)
 
-def render_post_shift(fin_df, safe_df, goal, trips_df):
+def render_post_shift(fin_df, safe_df, goal, trips_df, is_syncing):
     st.markdown("### 📊 Post-Shift Analytics")
+    
+    if is_syncing:
+        st.warning("⚠️ **Live Sync is currently active.** If you want to interact with the charts and filters smoothly without the page reloading, toggle 'Live Sync' OFF in the sidebar.")
+    
     col_chart, col_safety = st.columns([1.8, 1.2])
 
     with col_chart:
@@ -112,9 +116,8 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
                 ]
             ).interactive()
             
-            # Removed the deprecated width parameter
-            st.altair_chart(actual_line + ideal_line + points)
-            st.caption("Hover over the white dots to see specific trip details. Dashed line represents your target pace.")
+            st.altair_chart(actual_line + ideal_line + points, use_container_width=True)
+            st.caption("Hover over the white dots to see specific trip details.")
         else:
             st.write("No financial data available.")
 
@@ -122,8 +125,11 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
         st.markdown("#### Safety & Telemetry")
         score = 100
         if not safe_df.empty:
-            highs = len(safe_df[safe_df['severity'] == 'high'])
-            meds = len(safe_df[safe_df['severity'] == 'medium'])
+            # Clean strings to prevent matching bugs
+            safe_df['severity_clean'] = safe_df['severity'].astype(str).str.strip().str.upper()
+            
+            highs = len(safe_df[safe_df['severity_clean'] == 'HIGH'])
+            meds = len(safe_df[safe_df['severity_clean'] == 'MEDIUM'])
             score = max(0, 100 - (highs * 10) - (meds * 5))
             
         color = "green" if score > 85 else "orange" if score > 70 else "red"
@@ -137,18 +143,26 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
             with f_col2:
                 type_filter = st.multiselect("Event Type", ["Motion", "Audio", "Conflict"], default=["Motion", "Audio", "Conflict"])
             
-            # FIXED PANDAS WARNING: Added .copy() here
-            filtered_df = safe_df[safe_df['severity'].str.upper().isin(sev_filter)].copy()
+            # --- STRICT FILTERING LOGIC ---
+            if not sev_filter:
+                # If nothing is selected, force an empty dataframe
+                filtered_df = pd.DataFrame(columns=safe_df.columns)
+            else:
+                filtered_df = safe_df[safe_df['severity_clean'].isin(sev_filter)].copy()
             
-            def match_type(context_str):
-                context_str = str(context_str).lower()
-                if "motion" in context_str and "audio" in context_str: return "Conflict"
-                if "motion" in context_str: return "Motion"
-                if "audio" in context_str: return "Audio"
-                return "Other"
-                
-            filtered_df['event_category'] = filtered_df['context'].apply(match_type)
-            filtered_df = filtered_df[filtered_df['event_category'].isin(type_filter)]
+            if not filtered_df.empty:
+                if not type_filter:
+                    filtered_df = pd.DataFrame(columns=filtered_df.columns)
+                else:
+                    def match_type(context_str):
+                        context_str = str(context_str).lower()
+                        if "motion" in context_str and "audio" in context_str: return "Conflict"
+                        if "motion" in context_str: return "Motion"
+                        if "audio" in context_str: return "Audio"
+                        return "Other"
+                        
+                    filtered_df['event_category'] = filtered_df['context'].apply(match_type)
+                    filtered_df = filtered_df[filtered_df['event_category'].isin(type_filter)]
             
             st.markdown("##### Event Log")
             with st.container(height=350):
@@ -156,7 +170,7 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
                     st.success("No events match your current filters.")
                 else:
                     for idx, row in filtered_df.sort_values(by='timestamp').iterrows(): 
-                        sev = row['severity'].upper()
+                        sev = row['severity_clean']
                         icon = "🚨" if sev == "HIGH" else "⚠️" if sev == "MEDIUM" else "ℹ️"
                         with st.expander(f"{icon} {sev} | {row['timestamp'].split(' ')[1]} | {row['trip_id']}"):
                             st.markdown(f"**Flag:** {row['flag_type'].replace('_', ' ').title()}")
@@ -169,7 +183,6 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
 # 4. MAIN EVENT LOOP & SESSION STATE
 # ==========================================
 def main():
-    # Initialize session state for the UI polling
     if 'sim_running' not in st.session_state:
         st.session_state.sim_running = False
 
@@ -177,25 +190,29 @@ def main():
         st.markdown("### Control Panel")
         st.write("Welcome to the Uber Drive Pulse demo.")
         
-        # Fixed Streamlit warning by removing use_container_width
-        if st.button("▶️ Start Fresh Simulation", type="primary"):
+        if st.button("▶️ Start Fresh Simulation", type="primary", use_container_width=True):
             # Wipe files clean
             pd.DataFrame(columns=["log_id", "driver_id", "trip_id", "timestamp", "cumulative_earnings", "elapsed_hours", "trips_completed", "current_velocity", "required_velocity", "velocity_delta", "avg_earning_per_trip", "est_trips_remaining", "forecast_status"]).to_csv("data/earnings_velocity_log.csv", index=False)
             pd.DataFrame(columns=["flag_id", "trip_id", "driver_id", "timestamp", "elapsed_seconds", "flag_type", "severity", "explanation", "context"]).to_csv("data/flagged_moments.csv", index=False)
             
-            # Start backend in background thread
             sim_thread = threading.Thread(target=run_simulator, daemon=True)
             sim_thread.start()
             
-            # Tell the UI to start refreshing
             st.session_state.sim_running = True
             st.rerun()
 
         st.divider()
-        # Toggle switch to allow manual stop of the refresh loop
         auto_refresh = st.toggle("Live Sync (Auto-Refresh)", value=st.session_state.sim_running)
 
     fin_df, safe_df, goal, trips_df = load_data()
+    
+    # --- AUTO-KILL SWITCH ---
+    # If the simulation hits 9 trips and is achieved, turn off the live sync automatically
+    if auto_refresh and not fin_df.empty:
+        if len(fin_df) >= 8 and str(fin_df.iloc[-1]['forecast_status']).upper() == "ACHIEVED":
+            st.session_state.sim_running = False
+            auto_refresh = False
+            st.sidebar.success("✅ Simulation Finished! Live Sync disabled.")
     
     tab_live, tab_analytics = st.tabs(["🚗 Live Shift", "📊 Pit Stop Analytics"])
     
@@ -203,11 +220,11 @@ def main():
         render_live_shift(fin_df, goal)
         
     with tab_analytics:
-        render_post_shift(fin_df, safe_df, goal, trips_df)
+        render_post_shift(fin_df, safe_df, goal, trips_df, is_syncing=auto_refresh)
 
-    # Only run the loop if the toggle is ON. This stops the cloud flicker bug!
+    # Cloud-safe polling rate (2.0 seconds)
     if auto_refresh:
-        time.sleep(1.0) # Slowed to 1 second for cloud stability
+        time.sleep(2.0) 
         st.rerun()
 
 if __name__ == "__main__":
