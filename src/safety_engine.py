@@ -1,6 +1,7 @@
 import os
 import math
 import pandas as pd
+import uuid
 from datetime import datetime
 from collections import deque
 
@@ -56,12 +57,18 @@ class SafetyEngine:
 
         if len(self.motion_buffer) > 0:
             avg_accel = sum(val for ts, val in self.motion_buffer) / len(self.motion_buffer)
-            speed = row.get('speed_kmh', 0) # Extract the speed
             
-            # --- NEW CONTEXT-AWARE SPEED LOGIC ---
-            if avg_accel > self.DEVICE_DROP_THRESHOLD:
-                self.motion_buffer.clear() 
-                return 
+            # --- THE GPS DROP FIX ---
+            speed = row.get('speed_kmh', None)
+            # If speed is missing or NaN, assume they are driving (fail-safe)
+            if pd.isna(speed) or speed is None:
+                speed = 50.0
+            
+            # --- THE FIX: Check max instantaneous value, not average ---
+            max_accel = max(val for ts, val in self.motion_buffer)
+            if max_accel > self.DEVICE_DROP_THRESHOLD:
+                self.motion_buffer.clear() # Phone dropped! Clear memory.
+                return
                 
             # Filter out door slams and phone tosses while parked
             if speed < 5.0 and avg_accel > self.HARSH_BRAKE_THRESHOLD:
@@ -143,7 +150,7 @@ class SafetyEngine:
             )
 
     def _log_event(self, trip_id, driver_id, timestamp, elapsed_seconds, flag_type, severity, explanation, context):
-        flag_id = f"FLAG_{int(datetime.now().timestamp() * 1000)}" 
+        flag_id = f"FLAG_{uuid.uuid4().hex[:8].upper()}"
         new_row = pd.DataFrame([{
             "flag_id": flag_id, "trip_id": trip_id, "driver_id": driver_id, 
             "timestamp": timestamp, "elapsed_seconds": elapsed_seconds, 

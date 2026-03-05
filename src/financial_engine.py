@@ -1,5 +1,6 @@
 import os
 import math
+import uuid
 import pandas as pd
 from datetime import datetime
 
@@ -39,6 +40,10 @@ class FinancialEngine:
             # Combine the date and shift_start_time from the goals CSV
             start_str = f"{goal['date']} {goal['shift_start_time']}"
             end_str = f"{goal['date']} {goal['shift_end_time']}"
+
+            # --- THE MIDNIGHT SHIFT FIX ---
+            if end_str <= start_str:
+                end_str += timedelta(days=1)
             
             self.ledgers[driver_id] = {
                 "start_time": self._parse_time(start_str),
@@ -116,7 +121,7 @@ class FinancialEngine:
                              required_velocity, velocity_delta, avg_earning_per_trip, 
                              est_trips_remaining, forecast_status):
                              
-        log_id = f"VEL_{int(datetime.now().timestamp() * 1000)}"
+        log_id = f"VEL_{uuid.uuid4().hex[:8].upper()}"
         
         new_row = pd.DataFrame([{
             "log_id": log_id, "driver_id": driver_id, "trip_id": trip_id, 

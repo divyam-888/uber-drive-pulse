@@ -1,8 +1,9 @@
 flag_id,trip_id,driver_id,timestamp,elapsed_seconds,flag_type,severity,explanation,context
-FLAG_1772739387816,TRIP_002,DRV_ALEX,2024-10-25 08:51:01,661,harsh_braking,medium,Harsh brake (5.6 m/s²) at 42 km/h.,Motion: harsh_brake
-FLAG_1772739394206,TRIP_003,DRV_ALEX,2024-10-25 09:21:05,545,high_audio,medium,Sustained elevated cabin noise (85.5 dB avg).,Audio: elevated
-FLAG_1772739394255,TRIP_003,DRV_ALEX,2024-10-25 09:21:15,555,high_audio,high,Sustained elevated cabin noise (90.6 dB avg).,Audio: elevated
-FLAG_1772739401141,TRIP_004,DRV_ALEX,2024-10-25 09:52:31,751,harsh_braking,medium,Harsh brake (5.2 m/s²) at 37 km/h.,Motion: harsh_brake
-FLAG_1772739401168,TRIP_004,DRV_ALEX,2024-10-25 09:52:35,755,high_audio,low,Sustained elevated cabin noise (83.7 dB avg).,Audio: elevated
-FLAG_1772739401170,TRIP_004,DRV_ALEX,2024-10-25 09:52:35,755,conflict_moment,high,Combined signal: Harsh braking + sustained high audio within 60s.,Motion: harsh_brake | Audio: argument
-FLAG_1772739401212,TRIP_004,DRV_ALEX,2024-10-25 09:52:45,765,high_audio,medium,Sustained elevated cabin noise (89.3 dB avg).,Audio: elevated
+FLAG_FFBE8A07,TRIP_002,DRV_ALEX,2024-10-25 09:02:31,1351,harsh_braking,medium,Harsh brake (4.6 m/s²) at 75 km/h.,Motion: harsh_brake
+FLAG_334E22B6,TRIP_003,DRV_ALEX,2024-10-25 10:00:05,1505,high_audio,low,Sustained elevated cabin noise (82.0 dB avg).,Audio: elevated
+FLAG_32222F5E,TRIP_004,DRV_ALEX,2024-10-25 10:47:32,752,harsh_braking,medium,Harsh brake (5.3 m/s²) at 50 km/h.,Motion: harsh_brake
+FLAG_EC5C95FD,TRIP_005,DRV_ALEX,2024-10-25 11:25:01,901,high_audio,low,Sustained elevated cabin noise (80.5 dB avg).,Audio: elevated
+FLAG_D2630CBC,TRIP_005,DRV_ALEX,2024-10-25 11:25:01,901,harsh_braking,medium,Harsh brake (5.7 m/s²) at 37 km/h.,Motion: harsh_brake
+FLAG_D98632FB,TRIP_005,DRV_ALEX,2024-10-25 11:25:01,901,conflict_moment,high,Combined signal: Harsh braking + sustained high audio within 60s.,Motion: harsh_brake | Audio: argument
+FLAG_BF78C8A0,TRIP_005,DRV_ALEX,2024-10-25 11:25:11,911,high_audio,high,Sustained elevated cabin noise (93.0 dB avg).,Audio: elevated
+FLAG_91388FF6,TRIP_006,DRV_ALEX,2024-10-25 12:00:01,601,harsh_braking,medium,Harsh brake (4.8 m/s²) at 38 km/h.,Motion: harsh_brake

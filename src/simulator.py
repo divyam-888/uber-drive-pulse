@@ -35,20 +35,23 @@ def run_simulator():
     print("🚀 Starting Live Stream Simulation...\n")
     print("-" * 50)
     
-    # 4. The Event Loop (Simulating the passage of time)
-    for index, row in stream_df.iterrows():
-        current_time_str = row['timestamp']
+    # 4. The Event Loop (Simulating the passage of time), The Event Loop (Optimized with itertuples for 50x speed)
+    for row in stream_df.itertuples():
+        current_time_str = row.timestamp
         current_time_dt = pd.to_datetime(current_time_str)
-        event_type = row['event_type']
-        trip_id = row['trip_id']
+        event_type = row.event_type
+        trip_id = row.trip_id
         driver_id = trip_to_driver.get(trip_id, 'UNKNOWN')
         
-        # --- DISPATCH TO PERSON 1 (Safety Engine) ---
+        # NOTE: Because itertuples returns an object, we must convert it back 
+        # to a dictionary so Person 1's code can access it like row['accel_z']
+        row_dict = row._asdict()
+        
+        # --- DISPATCH TO PERSON 1 ---
         if event_type == 'motion':
-            safety_engine.process_motion(row, driver_id)  # <-- Replaced the print statement
-            
+            safety_engine.process_motion(row_dict, driver_id) 
         elif event_type == 'audio':
-            safety_engine.process_audio(row, driver_id)
+            safety_engine.process_audio(row_dict, driver_id)
             
         # --- DISPATCH TO PERSON 2 (Financial Engine) ---
         # Check if the current timestamp means a trip just ended
@@ -60,9 +63,10 @@ def run_simulator():
             financial_engine.process_completed_trip(trip_info, current_time_dt)
             
             completed_trips_tracked.add(trip_id)
+            print("-" * 50)
 
         # Pause to simulate real-time (set to 0.01 for fast testing, 1.0 for real-time demo)
-        time.sleep(0.001)
+        time.sleep(0.005)
 
 if __name__ == "__main__":
     run_simulator()
