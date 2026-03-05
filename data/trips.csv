@@ -1,5 +1,10 @@
 trip_id,driver_id,date,start_time,end_time,duration_min,distance_km,fare,surge_multiplier,pickup_location,dropoff_location,trip_status
-TRIP_001,DRV_ALEX,2024-10-25,08:15:00,08:30:00,15,5.2,120,1.0,Location A0,Location B0,completed
-TRIP_002,DRV_ALEX,2024-10-25,08:40:00,09:02:00,22,8.5,210,1.0,Location A1,Location B1,completed
-TRIP_003,DRV_ALEX,2024-10-25,09:12:00,09:30:00,18,6.1,160,1.0,Location A2,Location B2,completed
-TRIP_004,DRV_ALEX,2024-10-25,09:40:00,10:05:00,25,11.0,250,1.0,Location A3,Location B3,completed
+TRIP_001,DRV_ALEX,2024-10-25,08:15:00,08:30:00,15,3.0,20,1.0,Zone 0A,Zone 0B,completed
+TRIP_002,DRV_ALEX,2024-10-25,08:40:00,09:25:00,45,8.0,50,1.0,Zone 1A,Zone 1B,completed
+TRIP_003,DRV_ALEX,2024-10-25,09:35:00,10:25:00,50,10.0,60,1.0,Zone 2A,Zone 2B,completed
+TRIP_004,DRV_ALEX,2024-10-25,10:35:00,11:00:00,25,12.0,150,1.0,Zone 3A,Zone 3B,completed
+TRIP_005,DRV_ALEX,2024-10-25,11:10:00,11:40:00,30,15.0,180,1.0,Zone 4A,Zone 4B,completed
+TRIP_006,DRV_ALEX,2024-10-25,11:50:00,12:10:00,20,6.0,90,1.0,Zone 5A,Zone 5B,completed
+TRIP_007,DRV_ALEX,2024-10-25,12:20:00,12:35:00,15,8.0,80,1.0,Zone 6A,Zone 6B,completed
+TRIP_008,DRV_ALEX,2024-10-25,12:45:00,13:25:00,40,45.0,650,1.0,Zone 7A,Zone 7B,completed
+TRIP_009,DRV_ALEX,2024-10-25,13:35:00,14:25:00,50,20.0,250,1.0,Zone 8A,Zone 8B,completed

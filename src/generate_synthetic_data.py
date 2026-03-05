@@ -4,15 +4,13 @@ from datetime import datetime, timedelta
 import os
 
 def generate_data():
-    # 1. Setup Data Directory
     os.makedirs('data', exist_ok=True)
     
-    # Base configuration
     driver_id = "DRV_ALEX"
     date_str = "2024-10-25"
     shift_start = datetime.strptime(f"{date_str} 08:00:00", "%Y-%m-%d %H:%M:%S")
     
-    # --- 1. Generate Driver & Goals (For Person 2) ---
+    # --- 1. Generate Driver & Goals ---
     drivers_df = pd.DataFrame([{
         "driver_id": driver_id, "name": "Alex Kumar", "city": "Mumbai", 
         "shift_preference": "morning", "avg_hours_per_day": 8.0, 
@@ -26,16 +24,29 @@ def generate_data():
         "current_hours": 0, "status": "in_progress", "earnings_velocity": 0, "goal_completion_forecast": "pending"
     }])
 
-    # --- 2. Generate Trips (Synchronous anchor for Person 1 & 2) ---
+    # --- 2. The 9-Trip Narrative (Rigorous Test Cases) ---
     trips_data = []
     current_time = shift_start + timedelta(minutes=15) # First trip starts at 8:15
     
-    # Define the 4 test cases
     trip_configs = [
-        {"duration_min": 15, "fare": 120, "distance": 5.2, "anomaly": "none"},
-        {"duration_min": 22, "fare": 210, "distance": 8.5, "anomaly": "hard_brake"},
-        {"duration_min": 18, "fare": 160, "distance": 6.1, "anomaly": "loud_noise"},
-        {"duration_min": 25, "fare": 250, "distance": 11.0, "anomaly": "conflict"}
+        # Start slow. 15 mins for $20 (Pace: $80/hr -> BEHIND)
+        {"dur": 15, "fare": 20, "dist": 3.0, "anomaly": "door_slam"},        
+        # Stuck in traffic. 45 mins for $50 (Pace drops -> BEHIND)
+        {"dur": 45, "fare": 50, "dist": 8.0, "anomaly": "high_speed_brake"}, 
+        # Still struggling. 50 mins for $60 (Pace -> BEHIND)
+        {"dur": 50, "fare": 60, "dist": 10.0, "anomaly": "loud_radio"},      
+        # Tunnel trip. Decent fare, starting to catch up.
+        {"dur": 25, "fare": 150, "dist": 12.0, "anomaly": "gps_drop_brake"}, 
+        # The Argument. 
+        {"dur": 30, "fare": 180, "dist": 15.0, "anomaly": "conflict"},        
+        # Stop & go traffic. 
+        {"dur": 20, "fare": 90, "dist": 6.0, "anomaly": "rapid_brakes"},     
+        # Phone falls.
+        {"dur": 15, "fare": 80, "dist": 8.0, "anomaly": "device_drop"},      
+        # MASSIVE AIRPORT SURGE! Catching up completely!
+        {"dur": 40, "fare": 650, "dist": 45.0, "anomaly": "none"},            
+        # Final push to hit the $1500 goal
+        {"dur": 50, "fare": 250, "dist": 20.0, "anomaly": "none"}              
     ]
 
     accel_data_list = []
@@ -43,74 +54,88 @@ def generate_data():
 
     for i, config in enumerate(trip_configs):
         trip_id = f"TRIP_{i+1:03d}"
-        end_time = current_time + timedelta(minutes=config["duration_min"])
+        end_time = current_time + timedelta(minutes=config["dur"])
         
-        # Add to Trips
+        # Add to Trips log
         trips_data.append({
             "trip_id": trip_id, "driver_id": driver_id, "date": date_str,
             "start_time": current_time.strftime("%H:%M:%S"),
             "end_time": end_time.strftime("%H:%M:%S"),
-            "duration_min": config["duration_min"], "distance_km": config["distance"],
+            "duration_min": config["dur"], "distance_km": config["dist"],
             "fare": config["fare"], "surge_multiplier": 1.0, 
-            "pickup_location": f"Location A{i}", "dropoff_location": f"Location B{i}",
+            "pickup_location": f"Zone {i}A", "dropoff_location": f"Zone {i}B",
             "trip_status": "completed"
         })
 
-        # --- 3. Generate High-Frequency Sensor Data (For Person 1) ---
-        # Generate 1 row per second
+        # --- 3. Generate Sensor Arrays ---
         timestamps = pd.date_range(start=current_time, end=end_time, freq='s')
         elapsed_secs = np.arange(len(timestamps))
         
-        # Base normal data (gravity on Z, quiet cabin)
         z_accel = np.random.normal(9.8, 0.2, len(timestamps))
-        y_accel = np.random.normal(0, 0.5, len(timestamps)) # forward/back motion
-        audio_db = np.random.normal(55, 3, len(timestamps)) # normal road noise
+        y_accel = np.random.normal(0, 0.5, len(timestamps)) 
+        audio_db = np.random.normal(55, 3, len(timestamps)) 
+        speed_kmh = np.random.normal(40, 5, len(timestamps))
         
-        # INJECT ANOMALIES based on config
-        midpoint = len(timestamps) // 2
+        mid = len(timestamps) // 2
         
-        if config["anomaly"] in ["hard_brake", "conflict"]:
-            # Inject a massive 3-second deceleration spike in the Y axis
-            y_accel[midpoint:midpoint+3] = np.random.normal(-8.0, 1.0, 3) 
+        # INJECT SPECIFIC ANOMALIES
+        if config["anomaly"] == "door_slam":
+            speed_kmh[10:15] = 0.0 # Car is parked
+            y_accel[10:12] = -7.0  # Big jolt
             
-        if config["anomaly"] in ["loud_noise", "conflict"]:
-            # Inject 15 seconds of shouting (85-95 dB) right after the midpoint
-            audio_db[midpoint+1:midpoint+16] = np.random.normal(90, 2, 15)
+        elif config["anomaly"] == "high_speed_brake":
+            speed_kmh[mid:mid+3] = 75.0 # Highway speeds
+            y_accel[mid:mid+3] = -6.5   # Moderate brake, but dangerous at high speed
+            
+        elif config["anomaly"] == "loud_radio":
+            audio_db[mid:mid+10] = 82.0 # Sustained 82dB (Low severity)
+            
+        elif config["anomaly"] == "gps_drop_brake":
+            speed_kmh[mid:mid+5] = np.nan # GPS drops out in tunnel
+            y_accel[mid+1:mid+4] = -7.5   # Hard brake in tunnel
+            
+        elif config["anomaly"] == "conflict":
+            y_accel[mid:mid+3] = -8.5     # Hard brake
+            audio_db[mid-2:mid+12] = 93.0 # Shouting (High severity audio)
+            
+        elif config["anomaly"] == "rapid_brakes":
+            y_accel[mid:mid+2] = -7.0     # Brake 1
+            y_accel[mid+6:mid+8] = -7.5   # Brake 2 (Just 6 seconds later)
+            
+        elif config["anomaly"] == "device_drop":
+            y_accel[mid:mid+2] = -18.0    # Massive >15m/s2 spike
 
-        # Build DataFrames for this trip
+        # Build DataFrames row by row
         for j in range(len(timestamps)):
             accel_data_list.append({
                 "sensor_id": f"ACC_{trip_id}_{j}", "trip_id": trip_id,
                 "timestamp": timestamps[j].strftime("%Y-%m-%d %H:%M:%S"),
                 "elapsed_seconds": elapsed_secs[j],
                 "accel_x": np.random.normal(0, 0.2), "accel_y": y_accel[j], "accel_z": z_accel[j],
-                "speed_kmh": 40 + np.random.normal(0, 5), "gps_lat": 19.0 + (j*0.0001), "gps_lon": 72.8 + (j*0.0001)
+                "speed_kmh": speed_kmh[j], "gps_lat": 19.0 + (j*0.0001), "gps_lon": 72.8 + (j*0.0001)
             })
             
-            # Simple classification logic for the raw data
             classification = "loud" if audio_db[j] > 80 else "normal"
-            
             audio_data_list.append({
                 "audio_id": f"AUD_{trip_id}_{j}", "trip_id": trip_id,
                 "timestamp": timestamps[j].strftime("%Y-%m-%d %H:%M:%S"),
                 "elapsed_seconds": elapsed_secs[j],
                 "audio_level_db": round(audio_db[j], 1),
                 "audio_classification": classification,
-                "sustained_duration_sec": 0 # Your logic will calculate this later!
+                "sustained_duration_sec": 0 
             })
 
-        # Advance time for the next trip (driver takes a 10 min break)
+        # Driver takes a 10 min break between trips
         current_time = end_time + timedelta(minutes=10)
 
-    # --- 4. Save Everything to CSV ---
+    # --- 4. Save to CSV ---
     drivers_df.to_csv("data/drivers.csv", index=False)
     goals_df.to_csv("data/driver_goals.csv", index=False)
     pd.DataFrame(trips_data).to_csv("data/trips.csv", index=False)
     pd.DataFrame(accel_data_list).to_csv("data/accelerometer_data.csv", index=False)
     pd.DataFrame(audio_data_list).to_csv("data/audio_intensity_data.csv", index=False)
     
-    print("Successfully generated massive synthetic dataset in the /data folder!")
-    print(f"Generated {len(accel_data_list)} rows of sensor data across {len(trip_configs)} trips.")
+    print("✅ Successfully generated the 9-Trip Edge-Case Dataset!")
 
 if __name__ == "__main__":
     generate_data()
