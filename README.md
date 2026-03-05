@@ -26,3 +26,45 @@ uber-drive-pulse/
 │   └── config.toml                     # UI theme and styling configuration
 ├── requirements.txt                    # Project dependencies
 └── README.md
+```
+
+## Installation & Local Setup
+
+Ensure you have Python 3.8+ installed on your machine.
+
+1. **Clone the Repository**
+```bash
+git clone https://github.com/YourUsername/uber-drive-pulse.git
+cd uber-drive-pulse
+```
+
+2. **Create Virtual Environment (Optional)**
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. **Install Requirements**
+```bash
+pip install -r requirements.txt
+```
+
+## Running the Application
+
+This is an event-driven system. To view the full live pipeline locally, you must utilize two separate terminal windows to run the frontend and backend simultaneously.
+
+1. **Initialize Data and Frontend**
+In your first terminal, generate the synthetic test data and start the user interface.
+```bash
+python src/generate_synthetic_data.py
+streamlit run src/app.py
+```
+_Your browser will automatically open the dashboard. Leave it on the "Live Shift" tab. It will display a waiting state._
+
+2. **Trigger the Backend Simulator**
+```bash
+python src/simulator.py
+```
+
+_As the backend processes the simulated trips in the terminal, the Streamlit dashboard in your browser will automatically poll the new data and animate the progress bars and charts in real-time._
+
