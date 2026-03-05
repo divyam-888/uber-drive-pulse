@@ -54,6 +54,7 @@ pip install -r requirements.txt
 This is an event-driven system. To view the full live pipeline locally, you must utilize two separate terminal windows to run the frontend and backend simultaneously.
 
 1. **Initialize Data and Frontend**
+
 In your first terminal, generate the synthetic test data and start the user interface.
 ```bash
 python src/generate_synthetic_data.py
@@ -62,9 +63,26 @@ streamlit run src/app.py
 _Your browser will automatically open the dashboard. Leave it on the "Live Shift" tab. It will display a waiting state._
 
 2. **Trigger the Backend Simulator**
+
+Open a second terminal window, activate your virtual environment, and execute the event loop.
 ```bash
 python src/simulator.py
 ```
 
 _As the backend processes the simulated trips in the terminal, the Streamlit dashboard in your browser will automatically poll the new data and animate the progress bars and charts in real-time._
+
+## Data Schemas (Example I/O)
+The system relies on strict data contracts between the backend engines and the frontend UI.
+
+1. **Example Input (Accelerometer Stream):**
+```json
+{
+"timestamp": "2024-10-25 08:15:00",
+  "accel_x": 0.2, 
+  "accel_y": -7.5, 
+  "accel_z": 9.8,
+  "speed_kmh": 65.0
+}
+
+```
 
