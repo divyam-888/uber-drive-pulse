@@ -1,0 +1,5 @@
+trip_id,driver_id,date,start_time,end_time,duration_min,distance_km,fare,surge_multiplier,pickup_location,dropoff_location,trip_status
+TRIP_001,DRV_ALEX,2024-10-25,08:15:00,08:30:00,15,5.2,120,1.0,Location A0,Location B0,completed
+TRIP_002,DRV_ALEX,2024-10-25,08:40:00,09:02:00,22,8.5,210,1.0,Location A1,Location B1,completed
+TRIP_003,DRV_ALEX,2024-10-25,09:12:00,09:30:00,18,6.1,160,1.0,Location A2,Location B2,completed
+TRIP_004,DRV_ALEX,2024-10-25,09:40:00,10:05:00,25,11.0,250,1.0,Location A3,Location B3,completed
