@@ -3,6 +3,8 @@ import pandas as pd
 import time
 import altair as alt
 from datetime import datetime
+import threading                  
+from simulator import run_simulator 
 
 # ==========================================
 # 1. PAGE CONFIGURATION & ARCHITECTURE
@@ -205,7 +207,23 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
 # 4. MAIN EVENT LOOP (Real-Time Rendering)
 # ==========================================
 def main():
-    fin_df, safe_df, goal, trips_df = load_data() # Load 4th dataframe
+    with st.sidebar:
+        st.markdown("### Control Panel")
+        st.write("Welcome to the Uber Drive Pulse demo. Click below to start a fresh live simulation.")
+        
+        if st.button("Run Live Simulation", type="primary", use_container_width=True):
+            # 1. Wipe the old files clean so the UI resets
+            pd.DataFrame(columns=["log_id", "driver_id", "trip_id", "timestamp", "cumulative_earnings", "elapsed_hours", "trips_completed", "current_velocity", "required_velocity", "velocity_delta", "avg_earning_per_trip", "est_trips_remaining", "forecast_status"]).to_csv("data/earnings_velocity_log.csv", index=False)
+            pd.DataFrame(columns=["flag_id", "trip_id", "driver_id", "timestamp", "elapsed_seconds", "flag_type", "severity", "explanation", "context"]).to_csv("data/flagged_moments.csv", index=False)
+            
+            # 2. Start the backend simulator in a background thread
+            sim_thread = threading.Thread(target=run_simulator)
+            sim_thread.start()
+            
+            st.success("Simulation started! Switch to the Live Shift tab.")
+    # ---------------------------------
+
+    fin_df, safe_df, goal, trips_df = load_data()
     
     tab_live, tab_analytics = st.tabs(["🚗 Live Shift", "📊 Pit Stop Analytics"])
     
