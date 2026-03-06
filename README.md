@@ -321,20 +321,26 @@ pip install -r requirements.txt
 
 # Running the Application
 
-The system runs entirely from the Streamlit dashboard.
+This is an event-driven system. To view the full live pipeline locally, you must utilize two separate terminal windows to run the frontend and backend simultaneously.
 
-Start the app:
+1. Initialize Data and Frontend
 
+In your first terminal, generate the synthetic test data and start the user interface.
 ```bash
+python src/generate_synthetic_data.py
 streamlit run src/app.py
 ```
+_Your browser will automatically open the dashboard. Leave it on the "Live Shift" tab. It will display a waiting state._
 
-When the dashboard opens:
 
-1. Click **"Initialize System & Start Shift"**
-2. Synthetic data will be generated
-3. The simulator begins streaming events
-4. The dashboard updates in real time
+2. Trigger the Backend Simulator
+
+Open a second terminal window, activate your virtual environment, and execute the event loop.
+
+```bash
+python src/simulator.py
+```
+_As the backend processes the simulated trips in the terminal, the Streamlit dashboard in your browser will automatically poll the new data and animate the progress bars and charts in real-time._
 
 ---
 
@@ -465,8 +471,3 @@ https://uber-drive-pulse.streamlit.app/
 GitHub: 
 https://github.com/divyam-888
 
----
-
-# License
-
-MIT License
