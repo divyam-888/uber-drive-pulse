@@ -5,13 +5,12 @@ import altair as alt
 from datetime import datetime
 import threading
 
-# Import your backend engines!
 from simulator import run_simulator 
 from generate_synthetic_data import generate_data
 
-# ==========================================
+
 # 1. PAGE CONFIGURATION & CSS
-# ==========================================
+
 st.set_page_config(page_title="Uber Drive Pulse", page_icon="⬛", layout="wide")
 
 st.markdown("""
@@ -33,9 +32,7 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# ==========================================
-# 2. DATA LAYER (Fail-Safe Loading)
-# ==========================================
+# Load data
 def load_data():
     try:
         fin_df = pd.read_csv("data/earnings_velocity_log.csv")
@@ -44,12 +41,9 @@ def load_data():
         trips_df = pd.read_csv("data/trips.csv")
         return fin_df, safe_df, goals_df.iloc[0] if not goals_df.empty else None, trips_df
     except (FileNotFoundError, pd.errors.EmptyDataError):
-        # If files are missing or locked, return empty state
         return pd.DataFrame(), pd.DataFrame(), None, pd.DataFrame()
 
-# ==========================================
-# 3. UI COMPONENTS
-# ==========================================
+#UI for first tab
 def render_live_shift(fin_df, goal):
     st.markdown("<h1 style='text-align: center; font-weight: 600;'>Uber <span style='color: #276ef1;'>Drive Pulse</span></h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #888;'>Live Shift Companion • Alex Kumar</p>", unsafe_allow_html=True)
@@ -75,6 +69,7 @@ def render_live_shift(fin_df, goal):
     st.caption(f"Estimated {latest['est_trips_remaining']} trips remaining to hit target.")
     st.markdown("<div class='uber-footer'><b>Uber</b> Engineering Hackathon 2026</div>", unsafe_allow_html=True)
 
+#UI for second tab
 def render_post_shift(fin_df, safe_df, goal, trips_df):
     st.markdown("### 📊 Post-Shift Analytics")
     
@@ -134,7 +129,6 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
         with f_col2:
             type_filter = st.multiselect("Event Type", ["Motion", "Audio", "Conflict"], default=["Motion", "Audio", "Conflict"])
         
-        # 4. STRICT FILTERING LOGIC
         filtered_df = safe_df.copy()
         
         # Filter by Severity
@@ -171,16 +165,13 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
                         st.markdown(f"**Details:** {row['explanation']}")
                         st.caption(f"Raw Context: {row['context']}")
 
-# ==========================================
-# 4. MAIN EVENT LOOP & ROUTING
-# ==========================================
+
 def main():
     if 'sim_running' not in st.session_state:
         st.session_state.sim_running = False
 
     fin_df, safe_df, goal, trips_df = load_data()
 
-    # --- AUTO-KILL SWITCH ---
     # Stops the infinite reload loop exactly when the shift ends
     if st.session_state.sim_running and not fin_df.empty:
         if len(fin_df) >= 8 and str(fin_df.iloc[-1]['forecast_status']).upper() == "ACHIEVED":
@@ -191,7 +182,6 @@ def main():
     
     with tab_live:
         if fin_df.empty or goal is None:
-            # --- THE SELF-HEALING COLD START VIEW ---
             st.markdown("<h1 style='text-align: center; margin-top: 50px;'>Uber <span style='color: #276ef1;'>Drive Pulse</span></h1>", unsafe_allow_html=True)
             st.markdown("<p style='text-align: center; color: #888;'>System Offline. No active shift data found.</p>", unsafe_allow_html=True)
             
@@ -199,7 +189,6 @@ def main():
             with colB:
                 if st.button("▶️ Initialize System & Start Shift", type="primary", use_container_width=True):
                     with st.spinner("Generating Universe and calibrating sensors..."):
-                        # 1. Self-Heal: Build the data folder from scratch
                         generate_data() 
                         time.sleep(1) # Give the cloud OS time to write the files
                         

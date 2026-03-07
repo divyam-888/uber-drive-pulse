@@ -10,7 +10,7 @@ def generate_data():
     date_str = "2024-10-25"
     shift_start = datetime.strptime(f"{date_str} 08:00:00", "%Y-%m-%d %H:%M:%S")
     
-    # --- 1. Generate Driver & Goals ---
+    # Driver & Goals 
     drivers_df = pd.DataFrame([{
         "driver_id": driver_id, "name": "Alex Kumar", "city": "Mumbai", 
         "shift_preference": "morning", "avg_hours_per_day": 8.0, 
@@ -24,7 +24,7 @@ def generate_data():
         "current_hours": 0, "status": "in_progress", "earnings_velocity": 0, "goal_completion_forecast": "pending"
     }])
 
-    # --- 2. The 9-Trip Narrative (Rigorous Test Cases) ---
+    # The 9-Trip Narrative (Test Cases)
     trips_data = []
     current_time = shift_start + timedelta(minutes=15) # First trip starts at 8:15
     
@@ -67,7 +67,7 @@ def generate_data():
             "trip_status": "completed"
         })
 
-        # --- 3. Generate Sensor Arrays ---
+        # generate sensor data
         timestamps = pd.date_range(start=current_time, end=end_time, freq='s')
         elapsed_secs = np.arange(len(timestamps))
         
@@ -128,7 +128,6 @@ def generate_data():
         # Driver takes a 10 min break between trips
         current_time = end_time + timedelta(minutes=10)
 
-    # --- 4. Save to CSV ---
     drivers_df.to_csv("data/drivers.csv", index=False)
     goals_df.to_csv("data/driver_goals.csv", index=False)
     pd.DataFrame(trips_data).to_csv("data/trips.csv", index=False)

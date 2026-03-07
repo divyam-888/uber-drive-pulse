@@ -6,18 +6,15 @@ from datetime import datetime
 
 class FinancialEngine:
     def __init__(self):
-        # The Ledger: Stores running state for each driver
         # Structure: {'DRV_ALEX': {'earnings': 120, 'trips': 1, 'start_time': dt}}
         self.ledgers = {}
         
-        # Load the shift goals into memory
         self.goals_df = pd.read_csv("data/driver_goals.csv")
         
         self.output_log = "data/earnings_velocity_log.csv"
         self._initialize_output_file()
 
     def _initialize_output_file(self):
-        """Wipes old test data and sets up the upgraded Data Contract."""
         headers = ["log_id", "driver_id", "trip_id", "timestamp", 
                    "cumulative_earnings", "elapsed_hours", "trips_completed",
                    "current_velocity", "required_velocity", "velocity_delta",
@@ -28,20 +25,18 @@ class FinancialEngine:
         return datetime.strptime(ts_string, "%Y-%m-%d %H:%M:%S")
 
     def _get_goal_for_driver(self, driver_id):
-        """Fetches the shift constraints for the driver."""
         goal_row = self.goals_df[self.goals_df['driver_id'] == driver_id]
         if goal_row.empty:
             return None
         return goal_row.iloc[0]
 
     def _initialize_ledger(self, driver_id, goal):
-        """Sets up the driver's running totals on their first trip."""
         if driver_id not in self.ledgers:
-            # Combine the date and shift_start_time from the goals CSV
+            # combine the date and shift_start_time from the goals .csv
             start_str = f"{goal['date']} {goal['shift_start_time']}"
             end_str = f"{goal['date']} {goal['shift_end_time']}"
 
-            # --- THE MIDNIGHT SHIFT FIX ---
+            # if the end time is of the next day, account for midnight and daychange
             if end_str <= start_str:
                 end_str += timedelta(days=1)
             
@@ -61,29 +56,25 @@ class FinancialEngine:
         
         goal = self._get_goal_for_driver(driver_id)
         if goal is None:
-            return # Skip if driver has no set goals
+            return # skip if driver has no set goals
             
         self._initialize_ledger(driver_id, goal)
         ledger = self.ledgers[driver_id]
         
-        # 1. Update Core State
         ledger['cumulative_earnings'] += fare
         ledger['trips_completed'] += 1
         
-        # 2. Time Calculations
         elapsed_delta = current_time_dt - ledger['start_time']
         elapsed_hours = elapsed_delta.total_seconds() / 3600.0
         
         total_shift_hours = (ledger['end_time'] - ledger['start_time']).total_seconds() / 3600.0
         remaining_hours = total_shift_hours - elapsed_hours
         
-        # 3. New Functionalities (Averages & Trip Projections)
         avg_earning_per_trip = ledger['cumulative_earnings'] / ledger['trips_completed']
         
         remaining_target = max(0, ledger['target_earnings'] - ledger['cumulative_earnings'])
         est_trips_remaining = math.ceil(remaining_target / avg_earning_per_trip) if avg_earning_per_trip > 0 else 0
 
-        # 4. Velocity Calculations & Edge Cases
         # Edge Case A: Warm-up period (Prevent infinite velocity if 1st trip ends in 5 mins)
         safe_elapsed = max(elapsed_hours, 0.5) 
         current_velocity = ledger['cumulative_earnings'] / safe_elapsed
@@ -108,7 +99,7 @@ class FinancialEngine:
 
         velocity_delta = current_velocity - required_velocity
 
-        # 5. Log the Output (The Data Contract for Person 3)
+        # log the Output (The Data Contract for UI)
         self._log_financial_event(
             driver_id, trip_id, current_time_dt.strftime("%Y-%m-%d %H:%M:%S"),
             ledger['cumulative_earnings'], elapsed_hours, ledger['trips_completed'],
@@ -134,5 +125,4 @@ class FinancialEngine:
         
         new_row.to_csv(self.output_log, mode='a', header=False, index=False)
         
-        # Print a clean summary to terminal
         print(f"💰 [FINANCE] {trip_id} Logged. Earned: ${cumulative_earnings:.0f}/{self.ledgers[driver_id]['target_earnings']:.0f} | Pace: ${current_velocity:.0f}/hr | Remaining Trips ~{est_trips_remaining} | Status: {forecast_status.upper()}")
