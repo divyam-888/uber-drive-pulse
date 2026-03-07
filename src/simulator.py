@@ -61,7 +61,7 @@ def run_simulator():
             completed_trips_tracked.add(trip_id)
             print("-" * 50)
 
-        # pause to simulate real-time (set to 0.01 for fast testing, 1.0 for real-time demo)
+        # pause to simulate real-time (set to 0.002 for fast testing, 1.0 for real-time demo)
         time.sleep(0.002)
 
 if __name__ == "__main__":
