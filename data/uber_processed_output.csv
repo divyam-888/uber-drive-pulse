@@ -1,0 +1,18 @@
+timestamp,signal_type,raw_value,threshold,event_label,context
+2024-10-25 08:30:00,EARNINGS,40.0,197.33,behind,Required Velocity: $197.33/hr | Current Velocity: $40.00/hr | Delta: $-157.33/hr
+2024-10-25 09:02:31,ACCELEROMETER,4.5,4.0,harsh_braking,Harsh brake (4.5 m/s²) at 75 km/h.
+2024-10-25 09:25:00,EARNINGS,49.41,217.22,behind,Required Velocity: $217.22/hr | Current Velocity: $49.41/hr | Delta: $-167.80/hr
+2024-10-25 10:00:05,AUDIO,82.0,80.0,high_audio,Sustained elevated cabin noise (82.0 dB avg).
+2024-10-25 10:25:00,EARNINGS,53.79,245.37,behind,Required Velocity: $245.37/hr | Current Velocity: $53.79/hr | Delta: $-191.58/hr
+2024-10-25 10:47:32,ACCELEROMETER,5.2,4.0,harsh_braking,Harsh brake (5.2 m/s²) at 50 km/h.
+2024-10-25 11:00:00,EARNINGS,93.33,244.0,behind,Required Velocity: $244.00/hr | Current Velocity: $93.33/hr | Delta: $-150.67/hr
+2024-10-25 11:25:01,AUDIO,80.4,80.0,high_audio,Sustained elevated cabin noise (80.4 dB avg).
+2024-10-25 11:25:01,ACCELEROMETER,5.9,4.0,harsh_braking,Harsh brake (5.9 m/s²) at 34 km/h.
+2024-10-25 11:25:01,MULTIMODAL,COMBINED_SPIKE,COMPOSITE,conflict_moment,Combined signal: Harsh braking + sustained high audio within 60s.
+2024-10-25 11:25:11,AUDIO,93.0,80.0,high_audio,Sustained elevated cabin noise (93.0 dB avg).
+2024-10-25 11:40:00,EARNINGS,125.45,240.0,behind,Required Velocity: $240.00/hr | Current Velocity: $125.45/hr | Delta: $-114.55/hr
+2024-10-25 12:00:01,ACCELEROMETER,4.8,4.0,harsh_braking,Harsh brake (4.8 m/s²) at 41 km/h.
+2024-10-25 12:10:00,EARNINGS,132.0,247.83,behind,Required Velocity: $247.83/hr | Current Velocity: $132.00/hr | Delta: $-115.83/hr
+2024-10-25 12:35:00,EARNINGS,137.45,254.63,behind,Required Velocity: $254.63/hr | Current Velocity: $137.45/hr | Delta: $-117.18/hr
+2024-10-25 13:25:00,EARNINGS,236.31,85.16,ahead,Required Velocity: $85.16/hr | Current Velocity: $236.31/hr | Delta: $151.15/hr
+2024-10-25 14:25:00,EARNINGS,238.44,0.0,achieved,Required Velocity: $0.00/hr | Current Velocity: $238.44/hr | Delta: $238.44/hr
