@@ -1,2 +1,0 @@
-flag_id,trip_id,driver_id,timestamp,elapsed_seconds,flag_type,severity,explanation,context
-FLAG_C052B029,TRIP_002,DRV_ALEX,2024-10-25 09:02:31,1351,harsh_braking,medium,Harsh brake (4.5 m/s²) at 75 km/h.,Motion: harsh_brake
