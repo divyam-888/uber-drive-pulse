@@ -1,0 +1,2 @@
+log_id,driver_id,trip_id,timestamp,cumulative_earnings,elapsed_hours,trips_completed,current_velocity,required_velocity,velocity_delta,avg_earning_per_trip,est_trips_remaining,forecast_status
+VEL_553825AE,DRV_ALEX,TRIP_001,2024-10-25 08:30:00,20.0,0.5,1,40.0,197.33,-157.33,20.0,74,behind

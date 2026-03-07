@@ -212,7 +212,7 @@ def main():
 
     # The safe 2-second cloud polling loop
     if st.session_state.sim_running:
-        time.sleep(2.0)
+        time.sleep(1.0)
         st.rerun()
 
 if __name__ == "__main__":

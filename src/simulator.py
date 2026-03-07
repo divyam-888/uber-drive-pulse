@@ -62,7 +62,7 @@ def run_simulator():
             print("-" * 50)
 
         # pause to simulate real-time (set to 0.01 for fast testing, 1.0 for real-time demo)
-        time.sleep(0.005)
+        time.sleep(0.002)
 
 if __name__ == "__main__":
     run_simulator()
