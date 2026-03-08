@@ -1,52 +1,59 @@
 # Uber Drive Pulse
-
-Uber Drive Pulse is a **real-time driver telemetry and financial analytics system** designed for gig-economy drivers.  
-Built for the **Uber Engineering Hackathon 2026**, the system processes high-frequency sensor streams and trip data to provide:
-
-- Live shift financial pacing
-- Real-time safety monitoring
-- Post-shift behavioral analytics
-
-The system simulates a **production-style event streaming architecture** where sensor signals and trip completions are processed in chronological order and written to structured logs that power a live dashboard.
+### Engineering Handoff README  
+Uber Engineering Hackathon 2026
 
 ---
 
-# Demo Overview
+# Project Overview
 
-Uber Drive Pulse answers two key questions for drivers:
+Uber Drive Pulse is a **real-time telemetry and financial analytics prototype** designed to simulate how driver safety signals and earnings performance could be monitored during a shift.
 
-### 1. Am I driving safely?
-Using accelerometer and audio telemetry, the system detects:
+The system ingests **high-frequency accelerometer and audio sensor streams**, processes them through deterministic safety heuristics, tracks **driver earnings velocity**, and surfaces the results in a **live Streamlit dashboard**.
 
-- Harsh braking
-- Cabin noise spikes
-- Device drops
-- Passenger conflict situations
+The project was designed to demonstrate how Uber could combine:
 
-### 2. Am I on track to hit my earnings goal?
-The financial engine calculates:
+- onboard telemetry
+- behavioral safety detection
+- earnings pacing analytics
 
-- Current earnings velocity
-- Target pacing
-- Remaining trips required
-- Forecast status (Ahead / On Track / Behind / Achieved)
+into a **single real-time driver assistance interface**.
 
-The dashboard shows this information in a **minimal distraction Live Shift interface**, with deeper insights available after the shift ends.
+---
+
+# Live Deployment Link
+
+Streamlit Cloud URL:
+
+```
+https://uber-drive-pulse.streamlit.app/
+```
+
+If running locally for judging, follow the setup instructions below.
+
+---
+
+# Demo Video
+
+A short walkthrough demonstrating the full pipeline and dashboard.
+
+```
+https://drive.google.com/file/d/1SLSYfP_R6gtUwU2ugKaeZ-k56OiSRpDB/view?usp=sharing
+```
 
 ---
 
 # System Architecture
 
-The platform is designed as a **modular event-driven pipeline**.
+The system simulates a **real-time event processing pipeline**.
 
 ```
 Synthetic Data Generator
         │
         ▼
-Sensor CSV Streams (Accelerometer + Audio)
+Sensor Streams (Accelerometer + Audio)
         │
         ▼
-Simulator Event Loop
+Chronological Event Simulator
         │
         ├── Safety Engine
         │       │
@@ -59,194 +66,155 @@ Simulator Event Loop
         earnings_velocity_log.csv
                 │
                 ▼
-        Streamlit Dashboard
+Submission Log Generator
+                │
+                ▼
+uber_processed_output.csv
+                │
+                ▼
+Streamlit Dashboard
 ```
 
-### Key Design Principles
-
-- **Event-driven simulation**
-- **Deterministic heuristics instead of heavy ML**
-- **Chronological sensor replay**
-- **Decoupled backend and frontend**
-- **Live polling UI**
+The system is intentionally **modular** so each component can evolve independently.
 
 ---
 
-# Core Features
-
-## Real-Time Safety Engine
-
-Processes high-frequency telemetry streams to detect dangerous situations.
-
-### Motion Analysis
-Uses accelerometer signals to detect:
-
-- Harsh braking
-- Phone/device drops
-- Rapid braking sequences
-
-Features:
-
-- 3D linear acceleration calculation
-- Sliding time windows using `deque`
-- Speed-aware filtering to prevent false positives
-
-### Audio Analysis
-Detects abnormal cabin audio levels:
-
-- Loud music
-- Passenger arguments
-- Sustained noise spikes
-
-Audio signals are averaged across a time window to identify abnormal conditions.
-
-### Conflict Detection
-
-The system correlates motion and audio events.
-
-Example:
-
-```
-Harsh braking
-+
-Sustained high audio
-=
-Passenger conflict event
-```
-
-These compound signals trigger a **high-severity safety alert**.
-
----
-
-## Financial Velocity Engine
-
-Tracks a driver's earnings performance during a shift.
-
-Metrics include:
-
-- Cumulative earnings
-- Earnings velocity ($/hour)
-- Forecast pacing relative to target goal
-- Remaining trips required
-
-Forecast statuses:
-
-| Status | Meaning |
-|------|------|
-| AHEAD | Driver exceeds target pace |
-| ON_TRACK | Driver is near target pace |
-| BEHIND | Driver must increase pace |
-| ACHIEVED | Earnings goal reached |
-
----
-
-## Live Driver Dashboard
-
-Built with **Streamlit** and **Altair**.
-
-Two main interfaces:
-
-### 🚗 Live Shift View
-
-Minimal distraction interface showing:
-
-- Current earnings
-- Earnings velocity
-- Forecast status
-- Goal progress bar
-
----
-
-### 📊 Pit Stop Analytics
-
-Post-shift interactive analysis including:
-
-- Earnings vs ideal trajectory chart
-- Trip-by-trip financial breakdown
-- Safety event log
-- Safety score calculation
-- Filterable event explorer
-
----
-
-# Directory Structure
+# Repository Structure
 
 ```
 uber-drive-pulse/
-│
-├── data/
-│   ├── accelerometer_data.csv
-│   ├── audio_intensity_data.csv
-│   ├── drivers.csv
-│   ├── driver_goals.csv
-│   ├── trips.csv
-│   ├── flagged_moments.csv
-│   └── earnings_velocity_log.csv
-│
-├── src/
-│   ├── app.py
-│   ├── simulator.py
-│   ├── generate_synthetic_data.py
-│   ├── safety_engine.py
-│   └── financial_engine.py
-│
-├── requirements.txt
-└── README.md
+
+data/
+    accelerometer_data.csv
+    audio_intensity_data.csv
+    drivers.csv
+    driver_goals.csv
+    trips.csv
+    flagged_moments.csv
+    earnings_velocity_log.csv
+    uber_processed_output.csv
+
+src/
+    app.py
+    simulator.py
+    safety_engine.py
+    financial_engine.py
+    generate_synthetic_data.py
+    generate_uber_submission_log.py
+
+requirements.txt
+README.md
 ```
 
 ---
 
-# Synthetic Dataset Generation
+# Core Components
 
-The repository includes a **data generator that creates a realistic driving shift simulation**.
+## 1. Synthetic Data Generator
 
-### Generated Components
+`generate_synthetic_data.py`
 
-- Driver profile
-- Driver earnings goal
-- 9 trip events
-- Per-second accelerometer stream
-- Per-second audio stream
+Creates a **complete simulated driver shift dataset**.
 
-Each trip includes **specific injected anomalies** to test detection logic.
+Generated artifacts:
 
-Example anomalies:
+- driver profile
+- shift goals
+- trip metadata
+- per-second accelerometer stream
+- per-second audio stream
 
-| Event | Description |
-|------|------|
-Door Slam | Acceleration spike while parked |
-High Speed Brake | Sudden braking at highway speed |
-Loud Radio | Sustained elevated audio |
-Tunnel Brake | GPS dropout during braking |
-Passenger Conflict | High audio + harsh braking |
-Rapid Brakes | Multiple braking spikes |
-Device Drop | Large accelerometer spike |
+The dataset includes **nine trips with injected anomalies** to stress-test detection logic.
 
-This enables deterministic testing of the telemetry engine.
+Examples include:
+
+- harsh braking at highway speed
+- device drop acceleration spike
+- sustained loud audio
+- braking inside a tunnel (GPS dropout)
+- passenger conflict signal (brake + loud audio)
 
 ---
 
-# Safety Engine Logic
+## 2. Event Stream Simulator
 
-The safety engine processes motion and audio signals using **time-window buffers**.
+`simulator.py`
 
-Example motion logic:
+The simulator merges the sensor streams into a **chronological event stream**.
+
+Processing flow:
+
+1. Load accelerometer and audio streams
+2. Tag events by type
+3. Merge and sort by timestamp
+4. Replay events sequentially
+5. Dispatch events to engines
+
+Event routing:
 
 ```
-linear_accel = sqrt(ax² + ay² + (az - g)²)
+motion events → SafetyEngine.process_motion()
 
-if avg_accel > threshold:
-    log harsh braking event
+audio events → SafetyEngine.process_audio()
+
+trip completion → FinancialEngine.process_completed_trip()
 ```
 
-The engine uses:
+The loop runs with a short delay (`sleep(0.005)`) so the shift simulation completes quickly for demo purposes.
 
-- Sliding windows
-- Cooldown timers
-- Multi-signal correlation
-- GPS-aware filtering
+---
 
-Alerts are written to:
+## 3. Safety Engine
+
+`safety_engine.py`
+
+The safety engine processes telemetry signals using **deterministic heuristics and sliding time windows**.
+
+Signals analyzed:
+
+### Motion
+
+Linear acceleration is computed using:
+
+```
+a = sqrt(ax² + ay² + (az − g)²)
+```
+
+Detected events:
+
+- harsh braking
+- repeated braking
+- abnormal acceleration spikes
+
+Safety filters include:
+
+- ignoring spikes while vehicle speed < 5 km/h
+- cooldown windows between alerts
+- time-window smoothing
+
+### Audio
+
+Cabin audio signals detect sustained elevated noise levels.
+
+This can represent:
+
+- loud music
+- arguments
+- high passenger activity
+
+### Conflict Detection
+
+If both signals occur within a short time window:
+
+```
+harsh braking
++
+sustained high audio
+```
+
+the system flags a **conflict moment**.
+
+All safety events are written to:
 
 ```
 data/flagged_moments.csv
@@ -254,66 +222,137 @@ data/flagged_moments.csv
 
 ---
 
-# Simulator Event Loop
+## 4. Financial Engine
 
-The simulator replays sensor streams chronologically.
+`financial_engine.py`
 
-Key steps:
+Tracks driver shift performance and calculates:
 
-1. Load synthetic datasets
-2. Merge audio and motion streams
-3. Sort by timestamp
-4. Dispatch each event to the correct engine
+- cumulative earnings
+- earnings velocity ($/hour)
+- required velocity to hit target
+- forecast status
+- estimated trips remaining
+
+Forecast states:
+
+| Status | Meaning |
+|------|------|
+AHEAD | Driver is ahead of pace |
+ON_TRACK | Driver is near target pace |
+BEHIND | Driver must increase pace |
+ACHIEVED | Earnings goal reached |
+
+Financial metrics are logged to:
 
 ```
-Motion events → Safety Engine
-Audio events → Safety Engine
-Trip completion → Financial Engine
+data/earnings_velocity_log.csv
 ```
-
-This design mimics a **real-time streaming pipeline**.
 
 ---
 
-# Installation
+## 5. Submission Log Generator
 
-## Requirements
+`generate_uber_submission_log.py`
 
-- Python 3.8+
-- pip
+The hackathon deliverable requires a **single consolidated output file**.
+
+Rather than modifying the already-validated safety and financial engines late in development, a **post-processing step** was introduced to aggregate their outputs.
+
+This script reads:
+
+```
+flagged_moments.csv
+earnings_velocity_log.csv
+```
+
+and produces the unified submission file:
+
+```
+uber_processed_output.csv
+```
+
+This approach was chosen to:
+
+- avoid regression risk in working engines
+- preserve modular system design
+- keep the submission pipeline deterministic
+
+Execution of this step should occur **after the simulator completes**.
 
 ---
 
-## Clone the repository
+# Dashboard
 
-```bash
+`app.py`
+
+The frontend uses **Streamlit**.
+
+Two primary interfaces are provided.
+
+---
+
+## Live Shift
+
+Designed for minimal driver distraction.
+
+Displays:
+
+- current earnings
+- earnings velocity
+- forecast status
+- goal progress
+- estimated remaining trips
+
+---
+
+## Pit Stop Analytics
+
+Post-shift analysis view.
+
+Includes:
+
+- earnings vs ideal pace chart
+- trip-by-trip financial breakdown
+- safety score
+- filterable event log
+
+Safety score is derived from event severity.
+
+---
+
+# Create virtual environment
+
+## 1. Clone the repository
+
+```
 git clone https://github.com/divyam-888/uber-drive-pulse.git
 cd uber-drive-pulse
 ```
 
 ---
 
-## Create virtual environment
+## 2. Create virtual environment
 
-Mac / Linux:
+Mac / Linux
 
-```bash
+```
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-Windows:
+Windows
 
-```bash
+```
 python -m venv venv
 venv\Scripts\activate
 ```
 
 ---
 
-## Install dependencies
+## 3. Install dependencies
 
-```bash
+```
 pip install -r requirements.txt
 ```
 
@@ -344,128 +383,112 @@ _As the backend processes the simulated trips in the terminal, the Streamlit das
 
 ---
 
-# Example Data Contracts
+This will:
 
-### Accelerometer Input
+1. generate synthetic data
+2. start the simulator
+3. stream events to the dashboard
 
-```json
-{
-  "timestamp": "2024-10-25 08:15:00",
-  "accel_x": 0.2,
-  "accel_y": -7.5,
-  "accel_z": 9.8,
-  "speed_kmh": 65
-}
+---
+
+## 6. Generate submission output
+
+After the simulation finishes, run:
+
+```
+python src/generate_uber_submission_log.py
+```
+
+This produces:
+
+```
+data/uber_processed_output.csv
 ```
 
 ---
 
-### Safety Event Output
+# Trade-offs & Assumptions
 
-```
-flag_id,trip_id,timestamp,flag_type,severity,explanation
-FLAG_A1B2C3D4,TRIP_004,2024-10-25 11:25:02,conflict_moment,HIGH,Combined signal: Harsh braking + sustained high audio within 60s
-```
+### Deterministic Heuristics vs Machine Learning
 
----
-
-### Financial Log Output
-
-```
-log_id,trip_id,timestamp,cumulative_earnings,current_velocity,forecast_status
-VEL_E5F6G7H8,TRIP_004,2024-10-25 11:00:00,850.00,283.33,AHEAD
-```
-
----
-
-# Technology Stack
-
-Backend
-
-- Python
-- Pandas
-- NumPy
-
-Streaming Simulation
-
-- Event loop architecture
-- Chronological sensor replay
-
-Frontend
-
-- Streamlit
-- Altair charts
-
-Data Storage
-
-- CSV log files
-
----
-
-# Why Deterministic Rules Instead of Machine Learning?
-
-For hackathon prototyping and real-time edge environments:
+For this prototype, safety detection is implemented using **rule-based thresholds rather than ML models**.
 
 Advantages:
 
-- Predictable behavior
-- Fast execution
-- No training pipeline
-- Fully explainable outputs
+- predictable behavior
+- faster development
+- transparent logic for debugging
+- no training data requirement
 
-This makes the system easier to deploy on **mobile edge devices** in future versions.
+Trade-off:
 
----
-
-# Future Improvements
-
-Possible next steps:
-
-### Real Sensor Integration
-- Mobile accelerometer APIs
-- In-vehicle telematics
-- Smartphone microphone input
-
-### Streaming Infrastructure
-Replace CSV logs with:
-
-- Kafka
-- Redis streams
-- WebSocket feeds
-
-### ML Behavioral Models
-Train models to detect:
-
-- Driver fatigue
-- Aggressive driving patterns
-- Passenger dispute prediction
-
-### Fleet Dashboard
-Allow Uber fleet managers to monitor:
-
-- Driver safety scores
-- Real-time operational metrics
+- less adaptive than learned models
+- thresholds must be tuned manually.
 
 ---
 
-# Hackathon Context
+### Synthetic Telemetry Data
 
-This project was built for:
+Sensor inputs are generated artificially.
 
-**Uber Engineering Hackathon 2026**
+Assumptions made:
 
-Goal: explore how **real-time telemetry and financial analytics** could improve the experience and safety of gig-economy drivers.
+- accelerometer noise follows a normal distribution
+- audio signals approximate cabin noise patterns
+- trip durations and fares approximate real driving conditions
+
+Trade-off:
+
+The dataset is idealized and may not capture the full variability of real telemetry streams.
 
 ---
 
-# Authors
+### CSV-based Event Logging
+
+The prototype uses CSV logs instead of streaming infrastructure.
+
+Advantages:
+
+- simplicity
+- easy inspection
+- fast local iteration
+
+Trade-off:
+
+In production this would be replaced by:
+
+- Kafka streams
+- WebSocket event buses
+- real-time telemetry ingestion.
+
+---
+
+### Post-processing Submission Log
+
+The unified output file is generated using a **post-processing step** rather than direct engine integration.
+
+This design was intentionally chosen to:
+
+- preserve stability of working components
+- keep system modules loosely coupled
+- ensure reproducible submission output
+
+---
+
+# Next Engineering Steps
+
+Potential improvements if the system were extended:
+
+1. Replace CSV logs with event streaming infrastructure
+2. Integrate real mobile sensor telemetry
+3. Train ML models for behavioral driving detection
+4. Add fleet-level monitoring dashboards
+5. Deploy backend services for multi-driver support
+
+---
+
+# Author
 
 Divyam Nagpal – IIT (BHU) Varanasi  
 Nevica Gupta – IGDTUW  
 Chirag – IIT Roorkee  
-
-Uber-Drive-Pulse Deployment Link:
-https://uber-drive-pulse.streamlit.app/
-
-GitHub: 
-https://github.com/divyam-888
