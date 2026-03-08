@@ -3,14 +3,10 @@ import pandas as pd
 import time
 import altair as alt
 from datetime import datetime
-import threading
 
-from simulator import run_simulator 
-from generate_synthetic_data import generate_data
-
-
+# ==========================================
 # 1. PAGE CONFIGURATION & CSS
-
+# ==========================================
 st.set_page_config(page_title="Uber Drive Pulse", page_icon="⬛", layout="wide")
 
 st.markdown("""
@@ -32,7 +28,9 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Load data
+# ==========================================
+# 2. DATA LAYER
+# ==========================================
 def load_data():
     try:
         fin_df = pd.read_csv("data/earnings_velocity_log.csv")
@@ -43,12 +41,18 @@ def load_data():
     except (FileNotFoundError, pd.errors.EmptyDataError):
         return pd.DataFrame(), pd.DataFrame(), None, pd.DataFrame()
 
-#UI for first tab
+# ==========================================
+# 3. UI COMPONENTS
+# ==========================================
 def render_live_shift(fin_df, goal):
     st.markdown("<h1 style='text-align: center; font-weight: 600;'>Uber <span style='color: #276ef1;'>Drive Pulse</span></h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #888;'>Live Shift Companion • Alex Kumar</p>", unsafe_allow_html=True)
     st.divider()
     
+    if fin_df.empty or goal is None:
+        st.info("📡 Waiting for connection to driver's vehicle... (Start the simulator in Terminal 2)")
+        return
+
     latest = fin_df.iloc[-1]
     target = float(goal['target_earnings'])
     current = float(latest['cumulative_earnings'])
@@ -69,12 +73,8 @@ def render_live_shift(fin_df, goal):
     st.caption(f"Estimated {latest['est_trips_remaining']} trips remaining to hit target.")
     st.markdown("<div class='uber-footer'><b>Uber</b> Engineering Hackathon 2026</div>", unsafe_allow_html=True)
 
-#UI for second tab
 def render_post_shift(fin_df, safe_df, goal, trips_df):
     st.markdown("### 📊 Post-Shift Analytics")
-    
-    if st.session_state.sim_running:
-        st.warning("⚠️ **Live Sync Active:** The dashboard is updating in real-time. Wait for the shift to end to freely interact with the charts.")
     
     col_chart, col_safety = st.columns([1.8, 1.2])
 
@@ -101,7 +101,7 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
                 ]
             ).interactive()
             
-            st.altair_chart(actual_line + ideal_line + points, use_container_width=True)
+            st.altair_chart(actual_line + ideal_line + points, width="stretch")
         else:
             st.write("No financial data available.")
 
@@ -111,17 +111,15 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
             st.success("No safety events logged yet.")
             return
 
-        # 1. Clean data for strict matching
         safe_df['severity_clean'] = safe_df['severity'].astype(str).str.strip().str.upper()
+        safe_df['ts_obj'] = pd.to_datetime(safe_df['timestamp'], errors='coerce') 
         
-        # 2. Calculate Score
         highs = len(safe_df[safe_df['severity_clean'] == 'HIGH'])
         meds = len(safe_df[safe_df['severity_clean'] == 'MEDIUM'])
         score = max(0, 100 - (highs * 10) - (meds * 5))
         color = "green" if score > 85 else "orange" if score > 70 else "red"
         st.markdown(f"**Overall Safety Score:** :{color}[{score}/100]")
         
-        # 3. Filter UI
         st.markdown("##### Filter Events")
         f_col1, f_col2 = st.columns(2)
         with f_col1:
@@ -131,16 +129,14 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
         
         filtered_df = safe_df.copy()
         
-        # Filter by Severity
         if not sev_filter:
-            filtered_df = pd.DataFrame(columns=filtered_df.columns) # Empty it
+            filtered_df = pd.DataFrame(columns=filtered_df.columns) 
         else:
             filtered_df = filtered_df[filtered_df['severity_clean'].isin(sev_filter)]
             
-        # Filter by Type
         if not filtered_df.empty:
             if not type_filter:
-                filtered_df = pd.DataFrame(columns=filtered_df.columns) # Empty it
+                filtered_df = pd.DataFrame(columns=filtered_df.columns) 
             else:
                 def get_cat(ctx):
                     ctx = str(ctx).lower()
@@ -151,7 +147,6 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
                 filtered_df['category'] = filtered_df['context'].apply(get_cat)
                 filtered_df = filtered_df[filtered_df['category'].isin(type_filter)]
         
-        # 5. Render Log
         st.markdown("##### Event Log")
         with st.container(height=350):
             if filtered_df.empty:
@@ -160,58 +155,61 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
                 for idx, row in filtered_df.sort_values(by='timestamp').iterrows(): 
                     sev = row['severity_clean']
                     icon = "🚨" if sev == "HIGH" else "⚠️" if sev == "MEDIUM" else "ℹ️"
+                    flag_title = str(row['flag_type']).replace('_', ' ').title()
+                    explanation = str(row['explanation'])
+                    
+                    # --- THE EXACT DATA INJECTION FIX ---
+                    if "conflict" in flag_title.lower():
+                        current_ts = row['ts_obj']
+                        recent_events = safe_df[(safe_df['ts_obj'] <= current_ts) & (safe_df['ts_obj'] >= current_ts - pd.Timedelta(seconds=60))]
+                        
+                        brakes = recent_events[recent_events['flag_type'] == 'harsh_braking']
+                        audios = recent_events[recent_events['flag_type'] == 'high_audio']
+                        
+                        aug_details = []
+                        if not brakes.empty:
+                            aug_details.append(str(brakes.iloc[-1]['explanation']).replace("Sudden deceleration detected ", "").replace("Harsh brake ", ""))
+                        if not audios.empty:
+                            aug_details.append(str(audios.iloc[-1]['explanation']).replace("Sustained elevated cabin noise ", ""))
+                            
+                        if aug_details:
+                            explanation += f" \n\n**[Data Captured: {' | '.join(aug_details)}]**"
+
                     with st.expander(f"{icon} {sev} | {str(row['timestamp']).split(' ')[1]} | {row['trip_id']}"):
-                        st.markdown(f"**Flag:** {str(row['flag_type']).replace('_', ' ').title()}")
-                        st.markdown(f"**Details:** {row['explanation']}")
+                        st.markdown(f"**Flag:** {flag_title}")
+                        st.markdown(f"**Details:** {explanation}")
                         st.caption(f"Raw Context: {row['context']}")
 
-
+# ==========================================
+# 4. MAIN EVENT LOOP
+# ==========================================
 def main():
-    if 'sim_running' not in st.session_state:
-        st.session_state.sim_running = False
-
     fin_df, safe_df, goal, trips_df = load_data()
-
-    # Stops the infinite reload loop exactly when the shift ends
-    if st.session_state.sim_running and not fin_df.empty:
-        if len(fin_df) >= 8 and str(fin_df.iloc[-1]['forecast_status']).upper() == "ACHIEVED":
-            st.session_state.sim_running = False
-            st.toast("✅ Shift Completed! Analytics unlocked.")
 
     tab_live, tab_analytics = st.tabs(["🚗 Live Shift", "📊 Pit Stop Analytics"])
     
     with tab_live:
-        if fin_df.empty or goal is None:
-            st.markdown("<h1 style='text-align: center; margin-top: 50px;'>Uber <span style='color: #276ef1;'>Drive Pulse</span></h1>", unsafe_allow_html=True)
-            st.markdown("<p style='text-align: center; color: #888;'>System Offline. No active shift data found.</p>", unsafe_allow_html=True)
-            
-            colA, colB, colC = st.columns([1, 2, 1])
-            with colB:
-                if st.button("▶️ Initialize System & Start Shift", type="primary", use_container_width=True):
-                    with st.spinner("Generating Universe and calibrating sensors..."):
-                        generate_data() 
-                        time.sleep(1) # Give the cloud OS time to write the files
-                        
-                        # 2. Start the simulation
-                        threading.Thread(target=run_simulator, daemon=True).start()
-                        
-                        # 3. Trigger the UI to start polling
-                        st.session_state.sim_running = True
-                        st.rerun()
-        else:
-            render_live_shift(fin_df, goal)
-            
-            # Allow manual override to stop the simulation
-            if st.session_state.sim_running:
-                if st.button("⏹ Stop Live Sync"):
-                    st.session_state.sim_running = False
-                    st.rerun()
+        render_live_shift(fin_df, goal)
         
     with tab_analytics:
         render_post_shift(fin_df, safe_df, goal, trips_df)
 
-    # The safe 2-second cloud polling loop
-    if st.session_state.sim_running:
+    # --- BULLETPROOF POLLING LOGIC ---
+    # Determine if the simulation is actively running
+    is_active = False
+    
+    if fin_df.empty:
+        # Waiting for simulation to start
+        is_active = True 
+    else:
+        # Check if the final status is ACHIEVED. If not, it's still running.
+        latest_status = str(fin_df.iloc[-1]['forecast_status']).upper()
+        if latest_status != "ACHIEVED":
+            is_active = True
+
+    # If it is active, wait 1 second and force a refresh.
+    # Once it hits ACHIEVED, this block is bypassed, the loop stops, and the UI becomes perfectly stable for filtering.
+    if is_active:
         time.sleep(1.0)
         st.rerun()
 
