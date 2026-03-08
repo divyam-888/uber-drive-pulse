@@ -458,16 +458,14 @@ Goal: explore how **real-time telemetry and financial analytics** could improve 
 
 ---
 
-# Author
+# Authors
 
-**Divyam Nagpal**
-
-Mathematics & Computing  
-IIT (BHU) Varanasi
+Divyam Nagpal – IIT (BHU) Varanasi  
+Nevica Gupta – IGDTUW  
+Chirag – IIT Roorkee  
 
 Uber-Drive-Pulse Deployment Link:
 https://uber-drive-pulse.streamlit.app/
 
 GitHub: 
 https://github.com/divyam-888
-
