@@ -6,7 +6,7 @@ from financial_engine import FinancialEngine
 from safety_engine import SafetyEngine
 
 def run_simulator():
-    print("🚦 Initializing Uber Drive Pulse Simulator...")
+    print("Initializing Uber Drive Pulse Simulator...")
     safety_engine = SafetyEngine()
     financial_engine = FinancialEngine()
     
@@ -19,7 +19,7 @@ def run_simulator():
     audio_df['event_type'] = 'audio'
     
     # combine and sort both audio and motion data strictly by exact timestamp
-    print("🔄 Merging sensor streams chronologically...")
+    print("Merging sensor streams chronologically...")
     stream_df = pd.concat([accel_df, audio_df]).sort_values(by='timestamp')
     
     # convert trip end times to easily check when a trip finishes
@@ -29,7 +29,7 @@ def run_simulator():
 
     completed_trips_tracked = set()
 
-    print("🚀 Starting Live Stream Simulation...\n")
+    print("Starting Live Stream Simulation...\n")
     print("-" * 50)
     
     # the event loop simulating the passage of time, by sending data of each second (here we speed it up send 1 second data in 0.005 seconds)
@@ -61,7 +61,7 @@ def run_simulator():
             completed_trips_tracked.add(trip_id)
             print("-" * 50)
 
-        # pause to simulate real-time (set to 0.002 for fast testing, 1.0 for real-time demo)
+        # pause to simulate real-time (set to 0.001 for fast testing, 1.0 for real-time demo)
         time.sleep(0.001)
 
 if __name__ == "__main__":
