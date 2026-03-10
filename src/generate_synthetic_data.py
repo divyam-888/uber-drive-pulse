@@ -24,28 +24,28 @@ def generate_data():
         "current_hours": 0, "status": "in_progress", "earnings_velocity": 0, "goal_completion_forecast": "pending"
     }])
 
-    # The 9-Trip Narrative (Test Cases)
+    # The 9-Trip Test Cases
     trips_data = []
-    current_time = shift_start + timedelta(minutes=15) # First trip starts at 8:15
+    current_time = shift_start + timedelta(minutes=15) 
     
     trip_configs = [
-        # Start slow. 15 mins for $20 (Pace: $80/hr -> BEHIND)
+        # start slow. 15 mins for $20 (Pace: $80/hr -> BEHIND)
         {"dur": 15, "fare": 20, "dist": 3.0, "anomaly": "door_slam"},        
-        # Stuck in traffic. 45 mins for $50 (Pace drops -> BEHIND)
+        # stuck in traffic. 45 mins for $50 (Pace drops -> BEHIND)
         {"dur": 45, "fare": 50, "dist": 8.0, "anomaly": "high_speed_brake"}, 
-        # Still struggling. 50 mins for $60 (Pace -> BEHIND)
+        # still struggling. 50 mins for $60 (Pace -> BEHIND)
         {"dur": 50, "fare": 60, "dist": 10.0, "anomaly": "loud_radio"},      
-        # Tunnel trip. Decent fare, starting to catch up.
+        # starting to catch up
         {"dur": 25, "fare": 150, "dist": 12.0, "anomaly": "gps_drop_brake"}, 
-        # The Argument. 
+        # audio spike 
         {"dur": 30, "fare": 180, "dist": 15.0, "anomaly": "conflict"},        
-        # Stop & go traffic. 
+        # stop & go traffic 
         {"dur": 20, "fare": 90, "dist": 6.0, "anomaly": "rapid_brakes"},     
-        # Phone falls.
+        # phone drop
         {"dur": 15, "fare": 80, "dist": 8.0, "anomaly": "device_drop"},      
-        # MASSIVE AIRPORT SURGE! Catching up completely!
+        # surge, catching up completely
         {"dur": 40, "fare": 650, "dist": 45.0, "anomaly": "none"},            
-        # Final push to hit the $1500 goal
+        # final trip to hit the $1500 goal
         {"dur": 50, "fare": 250, "dist": 20.0, "anomaly": "none"}              
     ]
 
@@ -56,7 +56,6 @@ def generate_data():
         trip_id = f"TRIP_{i+1:03d}"
         end_time = current_time + timedelta(minutes=config["dur"])
         
-        # Add to Trips log
         trips_data.append({
             "trip_id": trip_id, "driver_id": driver_id, "date": date_str,
             "start_time": current_time.strftime("%H:%M:%S"),
@@ -67,7 +66,6 @@ def generate_data():
             "trip_status": "completed"
         })
 
-        # generate sensor data
         timestamps = pd.date_range(start=current_time, end=end_time, freq='s')
         elapsed_secs = np.arange(len(timestamps))
         
@@ -78,7 +76,6 @@ def generate_data():
         
         mid = len(timestamps) // 2
         
-        # INJECT SPECIFIC ANOMALIES
         if config["anomaly"] == "door_slam":
             speed_kmh[10:15] = 0.0 # Car is parked
             y_accel[10:12] = -7.0  # Big jolt
@@ -105,7 +102,6 @@ def generate_data():
         elif config["anomaly"] == "device_drop":
             y_accel[mid:mid+2] = -18.0    # Massive >15m/s2 spike
 
-        # Build DataFrames row by row
         for j in range(len(timestamps)):
             accel_data_list.append({
                 "sensor_id": f"ACC_{trip_id}_{j}", "trip_id": trip_id,
@@ -125,7 +121,7 @@ def generate_data():
                 "sustained_duration_sec": 0 
             })
 
-        # Driver takes a 10 min break between trips
+        # driver takes a 10 min break between trips
         current_time = end_time + timedelta(minutes=10)
 
     drivers_df.to_csv("data/drivers.csv", index=False)
