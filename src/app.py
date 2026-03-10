@@ -4,9 +4,7 @@ import time
 import altair as alt
 from datetime import datetime
 
-# ==========================================
-# 1. PAGE CONFIGURATION & CSS
-# ==========================================
+
 st.set_page_config(page_title="Uber Drive Pulse", page_icon="⬛", layout="wide")
 
 st.markdown("""
@@ -28,9 +26,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# ==========================================
-# 2. DATA LAYER
-# ==========================================
 def load_data():
     try:
         fin_df = pd.read_csv("data/earnings_velocity_log.csv")
@@ -41,9 +36,7 @@ def load_data():
     except (FileNotFoundError, pd.errors.EmptyDataError):
         return pd.DataFrame(), pd.DataFrame(), None, pd.DataFrame()
 
-# ==========================================
-# 3. UI COMPONENTS
-# ==========================================
+
 def render_live_shift(fin_df, goal):
     st.markdown("<h1 style='text-align: center; font-weight: 600;'>Uber <span style='color: #276ef1;'>Drive Pulse</span></h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #888;'>Live Shift Companion • Alex Kumar</p>", unsafe_allow_html=True)
@@ -158,7 +151,6 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
                     flag_title = str(row['flag_type']).replace('_', ' ').title()
                     explanation = str(row['explanation'])
                     
-                    # --- THE EXACT DATA INJECTION FIX ---
                     if "conflict" in flag_title.lower():
                         current_ts = row['ts_obj']
                         recent_events = safe_df[(safe_df['ts_obj'] <= current_ts) & (safe_df['ts_obj'] >= current_ts - pd.Timedelta(seconds=60))]
@@ -180,9 +172,7 @@ def render_post_shift(fin_df, safe_df, goal, trips_df):
                         st.markdown(f"**Details:** {explanation}")
                         st.caption(f"Raw Context: {row['context']}")
 
-# ==========================================
-# 4. MAIN EVENT LOOP
-# ==========================================
+
 def main():
     fin_df, safe_df, goal, trips_df = load_data()
 
@@ -194,21 +184,16 @@ def main():
     with tab_analytics:
         render_post_shift(fin_df, safe_df, goal, trips_df)
 
-    # --- BULLETPROOF POLLING LOGIC ---
-    # Determine if the simulation is actively running
     is_active = False
     
     if fin_df.empty:
-        # Waiting for simulation to start
         is_active = True 
     else:
-        # Check if the final status is ACHIEVED. If not, it's still running.
         latest_status = str(fin_df.iloc[-1]['forecast_status']).upper()
         if latest_status != "ACHIEVED":
             is_active = True
 
-    # If it is active, wait 1 second and force a refresh.
-    # Once it hits ACHIEVED, this block is bypassed, the loop stops, and the UI becomes perfectly stable for filtering.
+    # wait 1 second and force a refresh
     if is_active:
         time.sleep(1.0)
         st.rerun()
