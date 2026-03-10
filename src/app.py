@@ -5,7 +5,7 @@ import altair as alt
 from datetime import datetime
 
 
-st.set_page_config(page_title="Uber Drive Pulse", page_icon="⬛", layout="wide")
+st.set_page_config(page_title="Uber Driver Pulse", page_icon="⬛", layout="wide")
 
 st.markdown("""
     <style>

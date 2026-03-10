@@ -1,12 +1,12 @@
-# Uber Drive Pulse
+# Uber Driver Pulse: Team 9
 ### Engineering Handoff README  
-Uber Engineering Hackathon 2026
+Uber Engineering Hackathon 2026:
 
 ---
 
 # Project Overview
 
-Uber Drive Pulse is a **real-time telemetry and financial analytics prototype** designed to simulate how driver safety signals and earnings performance could be monitored during a shift.
+Uber Driver Pulse is a **real-time telemetry and financial analytics prototype** designed to simulate how driver safety signals and earnings performance could be monitored during a shift.
 
 The system ingests **high-frequency accelerometer and audio sensor streams**, processes them through deterministic safety heuristics, tracks **driver earnings velocity**, and surfaces the results in a **live Streamlit dashboard**.
 
