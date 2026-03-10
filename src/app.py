@@ -38,7 +38,7 @@ def load_data():
 
 
 def render_live_shift(fin_df, goal):
-    st.markdown("<h1 style='text-align: center; font-weight: 600;'>Uber <span style='color: #276ef1;'>Drive Pulse</span></h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; font-weight: 600;'>Uber <span style='color: #276ef1;'>Driver Pulse</span></h1>", unsafe_allow_html=True)
     st.markdown("<p style='text-align: center; color: #888;'>Live Shift Companion • Alex Kumar</p>", unsafe_allow_html=True)
     st.divider()
     
