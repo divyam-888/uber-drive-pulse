@@ -47,7 +47,94 @@ If running locally for judging, follow the setup instructions below.
 A short walkthrough demonstrating the full pipeline and dashboard.
 
 ```
-https://drive.google.com/file/d/1SLSYfP_R6gtUwU2ugKaeZ-k56OiSRpDB/view?usp=sharing
+https://drive.google.com/file/d/1byk1YipIwYIa_ph_FmS6JRM3_fNPakZ2/view?usp=sharing
+```
+
+---
+
+
+# Setup Instruction
+
+## 1. Clone the repository
+
+```
+git clone https://github.com/divyam-888/uber-drive-pulse.git
+cd uber-drive-pulse
+```
+
+---
+
+## 2. Create virtual environment
+
+Mac / Linux
+
+```
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Windows
+
+```
+python -m venv venv
+venv\Scripts\activate
+```
+
+---
+
+## 3. Install dependencies
+
+```
+pip install -r requirements.txt
+```
+
+---
+
+# Running the Application
+
+This is an event-driven system. To view the full live pipeline locally, you must utilize two separate terminal windows to run the frontend and backend simultaneously.
+
+1. Initialize Data and Frontend
+
+In your first terminal, generate the synthetic test data and start the user interface.
+```bash
+python src/generate_synthetic_data.py
+streamlit run src/app.py
+```
+_Your browser will automatically open the dashboard. Leave it on the "Live Shift" tab. It will display a waiting state._
+
+
+2. Trigger the Backend Simulator
+
+Open a second terminal window, activate your virtual environment, and execute the event loop.
+
+```bash
+python src/simulator.py
+```
+_As the backend processes the simulated trips in the terminal, the Streamlit dashboard in your browser will automatically poll the new data and animate the progress bars and charts in real-time._
+
+---
+
+This will:
+
+1. generate synthetic data
+2. start the simulator
+3. stream events to the dashboard
+
+---
+
+## 6. Generate submission output
+
+After the simulation finishes, run:
+
+```
+python src/generate_uber_submission_log.py
+```
+
+This produces:
+
+```
+data/uber_processed_output.csv
 ```
 
 ---
@@ -328,92 +415,6 @@ Includes:
 - filterable event log
 
 Safety score is derived from event severity.
-
----
-
-# Create virtual environment
-
-## 1. Clone the repository
-
-```
-git clone https://github.com/divyam-888/uber-drive-pulse.git
-cd uber-drive-pulse
-```
-
----
-
-## 2. Create virtual environment
-
-Mac / Linux
-
-```
-python3 -m venv venv
-source venv/bin/activate
-```
-
-Windows
-
-```
-python -m venv venv
-venv\Scripts\activate
-```
-
----
-
-## 3. Install dependencies
-
-```
-pip install -r requirements.txt
-```
-
----
-
-# Running the Application
-
-This is an event-driven system. To view the full live pipeline locally, you must utilize two separate terminal windows to run the frontend and backend simultaneously.
-
-1. Initialize Data and Frontend
-
-In your first terminal, generate the synthetic test data and start the user interface.
-```bash
-python src/generate_synthetic_data.py
-streamlit run src/app.py
-```
-_Your browser will automatically open the dashboard. Leave it on the "Live Shift" tab. It will display a waiting state._
-
-
-2. Trigger the Backend Simulator
-
-Open a second terminal window, activate your virtual environment, and execute the event loop.
-
-```bash
-python src/simulator.py
-```
-_As the backend processes the simulated trips in the terminal, the Streamlit dashboard in your browser will automatically poll the new data and animate the progress bars and charts in real-time._
-
----
-
-This will:
-
-1. generate synthetic data
-2. start the simulator
-3. stream events to the dashboard
-
----
-
-## 6. Generate submission output
-
-After the simulation finishes, run:
-
-```
-python src/generate_uber_submission_log.py
-```
-
-This produces:
-
-```
-data/uber_processed_output.csv
-```
 
 ---
 
