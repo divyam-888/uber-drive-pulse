@@ -47,7 +47,7 @@ If running locally for judging, follow the setup instructions below.
 A short walkthrough demonstrating the full pipeline and dashboard.
 
 ```
-https://drive.google.com/file/d/1SLSYfP_R6gtUwU2ugKaeZ-k56OiSRpDB/view?usp=sharing
+https://drive.google.com/file/d/1byk1YipIwYIa_ph_FmS6JRM3_fNPakZ2/view?usp=sharing
 ```
 
 ---
