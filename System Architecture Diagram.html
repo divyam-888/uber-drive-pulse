@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Uber Driver Pulse: System Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #F0F2F5;
+    font-family: 'Inter', sans-serif;
+    padding: 36px 24px 60px;
+  }
+
+  .page {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: -0.3px;
+  }
+  .header p {
+    font-size: 12.5px;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    margin-bottom: 28px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11.5px;
+    color: #374151;
+  }
+  .legend-dot {
+    width: 14px; height: 14px;
+    border-radius: 3px;
+    border: 1.5px solid;
+    flex-shrink: 0;
+  }
+  .legend-dash {
+    width: 22px; height: 2px;
+    flex-shrink: 0;
+  }
+
+  /* CANVAS */
+  .canvas {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 36px 40px 40px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
+  }
+
+  /* STAGE HEADER */
+  .stage-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stage-pill {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .stage-line {
+    flex: 1;
+    height: 1px;
+    background: #e5e7eb;
+  }
+
+  /* NODE */
+  .node {
+    border-radius: 10px;
+    border: 1.5px solid;
+    padding: 11px 14px;
+    position: relative;
+  }
+  .node-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    opacity: 0.7;
+  }
+  .node-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+  .node-desc {
+    font-size: 10.5px;
+    line-height: 1.5;
+    opacity: 0.75;
+  }
+  .assumed-tag {
+    position: absolute;
+    top: -9px;
+    right: 10px;
+    font-size: 9px;
+    font-weight: 600;
+    padding: 1px 7px;
+    border-radius: 20px;
+    background: #f3f4f6;
+    border: 1px dashed #9ca3af;
+    color: #6b7280;
+    letter-spacing: 0.04em;
+  }
+
+  /* COLORS */
+  .c-sensor   { background:#EFF6FF; border-color:#93C5FD; }
+  .c-sensor .node-title { color:#1e40af; }
+  .c-sensor .node-label { color:#3b82f6; }
+
+  .c-edge     { background:#FFF7ED; border-color:#FCD34D; }
+  .c-edge .node-title { color:#92400e; }
+  .c-edge .node-label { color:#d97706; }
+
+  .c-assumed  { background:#F9FAFB; border-color:#D1D5DB; border-style:dashed; }
+  .c-assumed .node-title { color:#4b5563; }
+  .c-assumed .node-label { color:#9ca3af; }
+
+  .c-safety   { background:#FEF2F2; border-color:#FCA5A5; }
+  .c-safety .node-title { color:#991b1b; }
+  .c-safety .node-label { color:#ef4444; }
+
+  .c-finance  { background:#F0FDF4; border-color:#86EFAC; }
+  .c-finance .node-title { color:#14532d; }
+  .c-finance .node-label { color:#22c55e; }
+
+  .c-csv      { background:#FFFBEB; border-color:#FCD34D; }
+  .c-csv .node-title { color:#78350f; }
+  .c-csv .node-label { color:#d97706; }
+
+  .c-ui       { background:#F5F3FF; border-color:#C4B5FD; border-width:2px; }
+  .c-ui .node-title { color:#3730a3; }
+  .c-ui .node-label { color:#7c3aed; }
+
+  /* ROWS */
+  .row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .row-center { justify-content: center; align-items: flex-start; }
+
+  /* CONNECTOR — SVG based for perfect centering */
+  .h-arrow {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-top: 22px;
+  }
+  .h-arrow svg { display: block; overflow: visible; }
+
+  /* VERTICAL */
+  .v-gap { display:flex; flex-direction:column; align-items:center; }
+  .v-line-label {
+    font-size:9.5px; color:#9ca3af;
+    font-weight:500; margin-top:3px;
+    letter-spacing:0.02em;
+  }
+
+  /* SIMULATOR WRAPPER */
+  .sim-wrapper {
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 16px 18px 18px;
+    background: #EFF6FF;
+    position: relative;
+  }
+  .sim-wrapper-label {
+    position: absolute;
+    top: -11px;
+    left: 16px;
+    background: #3b82f6;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 2px 10px;
+    border-radius: 20px;
+  }
+  .sim-wrapper-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin-bottom: 3px;
+  }
+  .sim-wrapper-desc {
+    font-size: 10.5px;
+    color: #6b7280;
+    margin-bottom: 14px;
+    font-style: italic;
+  }
+  .engines-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  /* PARALLEL WRAPPER */
+  .parallel-wrapper {
+    border: 2px dashed #f59e0b;
+    border-radius: 14px;
+    padding: 18px 20px 20px;
+    background: #FFFBF5;
+    position: relative;
+    margin-top: 8px;
+  }
+  .parallel-label {
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #f59e0b;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 2px 14px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .parallel-note {
+    font-size: 10.5px;
+    color: #78350f;
+    background: #FEF3C7;
+    border-left: 3px solid #f59e0b;
+    border-radius: 0 6px 6px 0;
+    padding: 6px 10px;
+    margin-bottom: 16px;
+    line-height: 1.55;
+  }
+
+  /* CSV ROW */
+  .csv-row {
+    display: flex;
+    gap: 12px;
+  }
+  .csv-node {
+    flex: 1;
+    border-radius: 8px;
+    border: 1.5px solid #FCD34D;
+    background: #FFFBEB;
+    padding: 9px 12px;
+  }
+  .csv-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #78350f;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 2px;
+  }
+  .csv-desc { font-size: 10px; color: #92400e; }
+
+  /* UI NODE */
+  .ui-node {
+    border-radius: 12px;
+    border: 2px solid #a78bfa;
+    background: #F5F3FF;
+    padding: 14px 18px;
+  }
+  .ui-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #3730a3;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .poll-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 8px;
+    background: #ede9fe;
+    border: 1px solid #a78bfa;
+    border-radius: 20px;
+    color: #5b21b6;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .ui-states {
+    display: flex;
+    gap: 10px;
+  }
+  .ui-state {
+    flex: 1;
+    border-radius: 8px;
+    padding: 9px 11px;
+    font-size: 10.5px;
+    line-height: 1.5;
+  }
+  .ui-state-a { background: #ede9fe; color: #3730a3; }
+  .ui-state-b { background: #ddd6fe; color: #3730a3; }
+  .ui-state strong { display: block; font-size: 11px; margin-bottom: 2px; }
+
+  /* NOTE */
+  .note {
+    margin-top: 24px;
+    padding: 11px 15px;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    font-size: 11px;
+    color: #475569;
+    line-height: 1.6;
+  }
+  .note strong { color: #1e40af; }
+
+  /* EXPORT BUTTON */
+  .toolbar { text-align:right; margin-bottom:16px; }
+  .btn {
+    font-family:'Inter',sans-serif;
+    font-size:12px; font-weight:600;
+    padding:7px 18px; border-radius:8px;
+    border:none; cursor:pointer;
+    background:#1e40af; color:white;
+    transition:background 0.15s;
+  }
+  .btn:hover { background:#1e3a8a; }
+
+  @media print {
+    body { background:white; padding:0; }
+    .toolbar { display:none; }
+    .canvas { box-shadow:none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="toolbar">
+    <button class="btn" onclick="window.print()">Export / Print</button>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Uber Driver Pulse: System Architecture Diagram</h1>
+    <p>Uber Engineering Hackathon 2026 <br> Chirag &nbsp;·&nbsp; Divyam Nagpal &nbsp;·&nbsp; Nevica Gupta</p>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#EFF6FF;border-color:#93C5FD;"></div>
+      Raw Data Source
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#FFF7ED;border-color:#FCD34D;"></div>
+      On-Device (Edge) Processing
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#EFF6FF;border-color:#3b82f6;"></div>
+      Cloud / Server Processing
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#F5F3FF;border-color:#a78bfa;"></div>
+      Driver Feedback (UI)
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#FFFBEB;border-color:#FCD34D;"></div>
+      Data Store (CSV)
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#F9FAFB;border-color:#D1D5DB;border-style:dashed;"></div>
+      Assumed / Not Implemented
+    </div>
+    <div class="legend-item">
+      <div class="legend-dash" style="background:repeating-linear-gradient(90deg,#f59e0b 0,#f59e0b 4px,transparent 4px,transparent 8px);"></div>
+      Parallel Execution
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas">
+
+    <!-- ══ STAGE 1: DATA SOURCES ══ -->
+    <div class="stage-header">
+      <div class="stage-pill" style="background:#DBEAFE;color:#1e40af;">Stage 1</div>
+      <div style="font-size:11.5px;font-weight:600;color:#374151;">Raw Data Sources &nbsp;:&nbsp; On-Device Sensors</div>
+      <div class="stage-line"></div>
+    </div>
+
+    <!-- Stage 1 nodes — spread evenly -->
+    <div id="stage1-row" style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div class="node c-sensor stage1-node" style="width:195px;">
+        <div class="node-label">Sensor</div>
+        <div class="node-title">Accelerometer</div>
+        <div class="node-desc">3-axis motion data<br>(accel_x, accel_y, accel_z)</div>
+      </div>
+      <div class="node c-sensor stage1-node" style="width:195px;">
+        <div class="node-label">Sensor</div>
+        <div class="node-title">Microphone / Audio</div>
+        <div class="node-desc">Cabin audio level<br>(dB intensity)</div>
+      </div>
+      <div class="node c-sensor stage1-node" style="width:195px;">
+        <div class="node-label">Sensor</div>
+        <div class="node-title">GPS / Speed</div>
+        <div class="node-desc">Location & speed (km/h)<br>(synthetically generated)</div>
+      </div>
+      <div class="node c-sensor stage1-node" style="width:195px;">
+        <div class="node-label">Sensor</div>
+        <div class="node-title">Trip Metadata</div>
+        <div class="node-desc">Fare, distance, timestamps<br>(synthetically generated)</div>
+      </div>
+    </div>
+
+    <!-- JS-drawn converging connector -->
+    <div id="stage1-connector" style="margin: 6px 0 0 0; position:relative; height:50px;"></div>
+
+    <!-- ══ STAGE 2: EDGE PROCESSING ══ -->
+    <div class="stage-header" style="margin-top:4px;">
+      <div class="stage-pill" style="background:#FEF3C7;color:#92400e;">Stage 2</div>
+      <div style="font-size:11.5px;font-weight:600;color:#374151;">On-Device (Edge) Processing</div>
+      <div class="stage-line"></div>
+    </div>
+
+    <!-- Vertical sequential flow centred -->
+    <div style="display:flex; flex-direction:column; align-items:center;">
+
+      <!-- Data Processing / Cleaning — assumed -->
+      <div class="node c-assumed" style="width:280px; text-align:center;">
+        <div class="assumed-tag">⚠ Assumed</div>
+        <div class="node-label">Assumed</div>
+        <div class="node-title">Data Processing / Cleaning</div>
+        <div class="node-desc">Null handling, outlier filtering,<br>format normalisation (not implemented)</div>
+      </div>
+
+      <svg width="12" height="30" viewBox="0 0 12 30" style="margin:2px 0;">
+        <line x1="6" y1="0" x2="6" y2="22" stroke="#d97706" stroke-width="2"/>
+        <polygon points="2,22 6,30 10,22" fill="#d97706"/>
+      </svg>
+
+      <!-- Sensor Fusion -->
+      <div class="node c-edge" style="width:280px; text-align:center;">
+        <div class="node-label">Edge</div>
+        <div class="node-title">Sensor Fusion</div>
+        <div class="node-desc">Merge all streams by timestamp<br>into unified event record</div>
+      </div>
+
+      <svg width="12" height="30" viewBox="0 0 12 30" style="margin:2px 0;">
+        <line x1="6" y1="0" x2="6" y2="22" stroke="#d97706" stroke-width="2"/>
+        <polygon points="2,22 6,30 10,22" fill="#d97706"/>
+      </svg>
+
+      <!-- Data Sampling -->
+      <div class="node c-edge" style="width:280px; text-align:center;">
+        <div class="node-label">Edge</div>
+        <div class="node-title">Data Sampling</div>
+        <div class="node-desc">Chronological sort; 1 Hz effective stream rate</div>
+      </div>
+
+      <svg width="12" height="34" viewBox="0 0 12 34" style="margin:2px 0;">
+        <line x1="6" y1="0" x2="6" y2="26" stroke="#3b82f6" stroke-width="2"/>
+        <polygon points="2,26 6,34 10,26" fill="#3b82f6"/>
+      </svg>
+      <div class="v-line-label" style="color:#3b82f6; margin-bottom:10px;">sorted_sensor_stream</div>
+
+    </div>
+
+
+    <!-- ══ PARALLEL EXECUTION BAND ══ -->
+    <div class="parallel-wrapper">
+      <div class="parallel-label">⟳ &nbsp;Parallel Execution: Simulator & UI run simultaneously</div>
+
+      <div class="parallel-note">
+        The <strong>Event Stream Simulator</strong> and the <strong>Streamlit UI</strong> operate simultaneously and independently. The simulator continuously writes to CSV files while the UI polls those same files every second: neither process waits for the other to finish.
+      </div>
+
+      <!-- ══ STAGE 3: SIMULATOR ══ -->
+      <div class="stage-header">
+        <div class="stage-pill" style="background:#DBEAFE;color:#1e40af;">Stage 3</div>
+        <div style="font-size:11.5px;font-weight:600;color:#374151;">Cloud / Server Processing</div>
+        <div class="stage-line"></div>
+      </div>
+
+      <div class="sim-wrapper" style="max-width:600px; margin:0 auto;">
+        <div class="sim-wrapper-label">Event Stream Simulator &nbsp;·&nbsp; simulator.py</div>
+        <div style="height:8px;"></div>
+        <div class="sim-wrapper-title">Event Stream Simulator</div>
+        <div class="sim-wrapper-desc">Ingests chronological sensor events and dispatches them to both engines in real time</div>
+        <div class="engines-row">
+          <!-- Safety Engine -->
+          <div class="node c-safety" style="flex:1;">
+            <div class="node-label">Implemented</div>
+            <div class="node-title">Safety Engine</div>
+            <div class="node-desc">
+              Sliding window (deque)<br>
+              Acceleration magnitude + gravity subtraction<br>
+              Edge filters: door slam, device drop<br>
+              Conflict detection (motion + audio)
+            </div>
+          </div>
+          <!-- Financial Engine -->
+          <div class="node c-finance" style="flex:1;">
+            <div class="node-label">Implemented</div>
+            <div class="node-title">Financial Engine</div>
+            <div class="node-desc">
+              Running ledger per driver<br>
+              Earnings velocity calculation<br>
+              Forecast: AHEAD / ON_TRACK / BEHIND<br>
+              Edge cases: warm-up, overtime, midnight
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Arrows from engines to CSVs -->
+      <div style="display:flex; gap:12px; max-width:600px; margin:10px auto 0;">
+        <div class="v-gap" style="width:50%; align-items:center;">
+          <svg width="12" height="34" viewBox="0 0 12 34">
+            <line x1="6" y1="0" x2="6" y2="26" stroke="#ef4444" stroke-width="2"/>
+            <polygon points="2,26 6,34 10,26" fill="#ef4444"/>
+          </svg>
+          <div class="v-line-label">writes to</div>
+        </div>
+        <div class="v-gap" style="width:50%; align-items:center;">
+          <svg width="12" height="34" viewBox="0 0 12 34">
+            <line x1="6" y1="0" x2="6" y2="26" stroke="#22c55e" stroke-width="2"/>
+            <polygon points="2,26 6,34 10,26" fill="#22c55e"/>
+          </svg>
+          <div class="v-line-label">writes to</div>
+        </div>
+      </div>
+
+      <!-- CSV files -->
+      <div class="csv-row" style="max-width:600px; margin:0 auto;">
+        <div class="csv-node">
+          <div class="csv-title">flagged_moments.csv</div>
+          <div class="csv-desc">Safety alerts, severity, context</div>
+        </div>
+        <div class="csv-node">
+          <div class="csv-title">earnings_velocity_log.csv</div>
+          <div class="csv-desc">Pace, velocity & forecast status</div>
+        </div>
+      </div>
+
+      <!-- Arrows from CSVs to UI -->
+      <div style="display:flex; gap:12px; max-width:600px; margin:4px auto 0;">
+        <div class="v-gap" style="width:50%; align-items:center;">
+          <svg width="12" height="34" viewBox="0 0 12 34">
+            <line x1="6" y1="0" x2="6" y2="26" stroke="#7c3aed" stroke-width="2"/>
+            <polygon points="2,26 6,34 10,26" fill="#7c3aed"/>
+          </svg>
+          <div class="v-line-label" style="color:#7c3aed;">polls every 1s</div>
+        </div>
+        <div class="v-gap" style="width:50%; align-items:center;">
+          <svg width="12" height="34" viewBox="0 0 12 34">
+            <line x1="6" y1="0" x2="6" y2="26" stroke="#7c3aed" stroke-width="2"/>
+            <polygon points="2,26 6,34 10,26" fill="#7c3aed"/>
+          </svg>
+          <div class="v-line-label" style="color:#7c3aed;">polls every 1s</div>
+        </div>
+      </div>
+
+      <!-- ══ STAGE 4: UI ══ -->
+      <div class="stage-header" style="margin-top:10px;">
+        <div class="stage-pill" style="background:#EDE9FE;color:#3730a3;">Stage 4</div>
+        <div style="font-size:11.5px;font-weight:600;color:#374151;">Driver Feedback Loop</div>
+        <div class="stage-line"></div>
+      </div>
+
+      <div class="ui-node" style="max-width:600px; margin:0 auto;">
+        <div class="ui-title">
+          Streamlit Dashboard &nbsp;·&nbsp; app.py
+          <span class="poll-badge">⟳ polls every 1s</span>
+        </div>
+        <div class="ui-states">
+          <div class="ui-state ui-state-a">
+            <strong>State A: Live Shift</strong>
+            Minimalist view only. Progress bar, current pace, forecast badge. No charts while driving.
+          </div>
+          <div class="ui-state ui-state-b">
+            <strong>State B: Pit Stop Analytics</strong>
+            Post-shift deep dive. Altair pace chart (actual vs. ideal), safety log with severity filtering.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /parallel-wrapper -->
+
+    <!-- NOTE -->
+    <div class="note">
+      <strong>Note:</strong> The <em>Data Processing / Cleaning</em> step (marked <em>"⚠ Assumed"</em>, dashed border) is <strong>not implemented</strong> in the current prototype. All sensor data is synthetically generated in a clean, pre-formatted state via <code>generate_synthetic_data.py</code>, so null handling, outlier filtering, and format normalisation are not required. All other stages, including all four Stage 1 sources, Sensor Fusion, Data Sampling, both engines, and the Streamlit dashboard are fully implemented.
+    </div>
+
+  </div><!-- /canvas -->
+
+</div>
+<script>
+window.addEventListener('load', function () {
+  var nodes = document.querySelectorAll('.stage1-node');
+  var container = document.getElementById('stage1-connector');
+  if (!nodes.length || !container) return;
+
+  var containerRect = container.getBoundingClientRect();
+  var svgNS = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(svgNS, 'svg');
+  var W = containerRect.width;
+  var H = 50;
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  svg.setAttribute('width', '100%');
+  svg.setAttribute('height', H + 'px');
+  svg.style.display = 'block';
+  svg.style.overflow = 'visible';
+
+  var centers = [];
+  nodes.forEach(function (node) {
+    var r = node.getBoundingClientRect();
+    centers.push(r.left + r.width / 2 - containerRect.left);
+  });
+
+  var yDrop = 22, yBar = 22, yArrowStart = 22, yArrowEnd = 43;
+  var midX = (centers[0] + centers[centers.length - 1]) / 2;
+
+  function makeLine(x1, y1, x2, y2, stroke, dash) {
+    var l = document.createElementNS(svgNS, 'line');
+    l.setAttribute('x1', x1); l.setAttribute('y1', y1);
+    l.setAttribute('x2', x2); l.setAttribute('y2', y2);
+    l.setAttribute('stroke', stroke); l.setAttribute('stroke-width', '2');
+    if (dash) l.setAttribute('stroke-dasharray', dash);
+    return l;
+  }
+
+  // vertical drops from each node center
+  centers.forEach(function (cx) {
+    svg.appendChild(makeLine(cx, 0, cx, yDrop, '#3b82f6'));
+  });
+
+  // horizontal bar connecting first to last
+  svg.appendChild(makeLine(centers[0], yBar, centers[centers.length - 1], yBar, '#3b82f6'));
+
+  // center vertical drop with arrowhead
+  svg.appendChild(makeLine(midX, yArrowStart, midX, yArrowEnd - 1, '#3b82f6'));
+  var poly = document.createElementNS(svgNS, 'polygon');
+  poly.setAttribute('points', (midX - 4) + ',' + (yArrowEnd - 8) + ' ' + midX + ',' + yArrowEnd + ' ' + (midX + 4) + ',' + (yArrowEnd - 8));
+  poly.setAttribute('fill', '#3b82f6');
+  svg.appendChild(poly);
+
+  container.appendChild(svg);
+});
+</script>
+</body>
+</html>
